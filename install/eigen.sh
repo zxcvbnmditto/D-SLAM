@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define Variables
-LIB_PATH=/vslam/libs
+LIB_PATH=/vslam/ThirdParty
 EIGEN_PATH=$LIB_PATH/eigen
 
 # Install eigen
@@ -11,7 +11,7 @@ wget http://bitbucket.org/eigen/eigen/get/3.3.3.tar.bz2
 bzip2 -d 3.3.3.tar.bz2
 tar -xvf 3.3.3.tar
 rm 3.3.3.tar
-mv eigen-* eigen # Rename
+mv eigen-*/ eigen # Rename
 mv eigen $EIGEN_PATH # Move
 
 mkdir -p $EIGEN_PATH/build

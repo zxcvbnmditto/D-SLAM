@@ -1,6 +1,14 @@
 #!/bin/bash
-sh ./opencv.sh
-sh ./pangolin.sh
-sh ./eigen.sh
-sh ./orbslam2.sh
+BASE_PATH=/vslam/install
+
+sh $BASE_PATH/opencv.sh
+
+sh $BASE_PATH/pangolin.sh
+
+sh $BASE_PATH/eigen.sh
+
+sh $BASE_PATH/orbslam2.sh
+
+sh $BASE_PATH/monodepth2.sh
+
 

@@ -59,7 +59,7 @@ mv kitti-gray-odometry <path-to-project-root>/data
 
 Run the ORB-SLAM2 simulation
 ```bash
-./Examples/Monocular/mono_kitti Vocabulary/ORBvoc.txt Examples/Monocular/KITTI03.yaml /vslam/data/kitti/sequences/03
+./Examples/Monocular/mono_kitti Vocabulary/ORBvoc.txt Examples/Monocular/KITTI03.yaml /vslam/data/kitti-gray-odometry/sequences/03
 ```
 
 To run monodepth, simply supply an image or a image directory and modify the following command

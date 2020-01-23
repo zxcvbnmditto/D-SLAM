@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define Variables
-LIB_PATH=/vslam/libs
+LIB_PATH=/vslam/ThirdParty
 PANGOLIN_PATH=$LIB_PATH/pangolin
 
 # Install pangolin

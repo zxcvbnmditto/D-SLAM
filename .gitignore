@@ -1,6 +1,7 @@
 
 # Custom
-/monodepth2
+ThirdParty/
+*.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

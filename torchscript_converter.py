@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 import sys
 sys.path.append("./ThirdParty/monodepth2")
 
+import torch.nn as nn
 import torch
 import matplotlib.pyplot as plt
 import PIL.Image as pil
@@ -14,19 +15,8 @@ from torchvision import transforms
 import torchvision
 
 
-# import ThirdParty.monodepth2.networks as networks
-
-# Define model
-
-# Load Weight
-
-# torch.jit.trace
-
-# save
-
-
 def load_example_image(loaded_dict_enc):
-    image_path = "ThirdParty/monodepth2/assets/test_image.jpg"
+    image_path = "data/depth/test_image.jpg"
     input_image = pil.open(image_path).convert('RGB')
     original_width, original_height = input_image.size
 
@@ -39,15 +29,27 @@ def load_example_image(loaded_dict_enc):
     return input_image_pytorch
 
 
-def convert_pretrained():
-    # Pretrained Model Name
-    model_name = "mono_640x192"
+def check_tensor_eq(t1, t2):
+    if not torch.all(torch.eq(t1, t2)):
+        raise "Failure. Decoder Outputs does not match with origin implementation"
 
+
+def verify_encoder(outputs, gt_outputs):
+    for t1, t2 in zip(outputs, gt_outputs):
+        check_tensor_eq(t1, t2)
+    print("Encoder Input Verified. Test Passed.")
+
+
+def verify_decoder(outputs, gt_outputs):
+    for i, gt in enumerate(gt_outputs.values()):
+        check_tensor_eq(outputs[i], gt)
+    print("Decoder Input Verified. Test Passed.")
+
+
+def convert_pretrained(model):
     # Pretrained Weights
-    encoder_path = os.path.join("models", model_name, "encoder.pth")
-    depth_decoder_path = os.path.join("models", model_name, "depth.pth")
-    t_encoder_path = os.path.join("models", model_name, "t_encoder.pt")
-    t_depth_decoder_path = os.path.join("models", model_name, "t_depth.pt")
+    encoder_path = os.path.join("models", model, "encoder.pth")
+    depth_decoder_path = os.path.join("models", model, "depth.pth")
 
     # Model Architechture
     encoder = networks.ResnetEncoder(18, False)
@@ -63,26 +65,37 @@ def convert_pretrained():
     loaded_dict = torch.load(depth_decoder_path, map_location='cpu')
     depth_decoder.load_state_dict(loaded_dict)
 
-    import pdb; pdb.set_trace()
+    # Set to Eval mode
     encoder.eval()
     depth_decoder.eval()
 
-    example_image = load_example_image(loaded_dict_enc)
+    # Forward
+    image = load_example_image(loaded_dict_enc)
     with torch.no_grad():
-        example_features = encoder(example_image)
-        outputs = depth_decoder(example_features)
+        # Encoder
+        gt_features = encoder.forward_original(image)
+        features = encoder(image)
+        verify_encoder(features, gt_features)
 
-        import pdb; pdb.set_trace()
-        # Trace
-        # encoder_module = torch.jit.trace(encoder.encoder, example_image)
-        depth_decoder_module = torch.jit.trace(depth_decoder, example_features)
-        # Serialize
-        # encoder_module.save(t_encoder_path)
-        depth_decoder_module.save(t_depth_decoder_path)
+        # Decoder
+        gt_outputs = depth_decoder.forward_original(features)
+        outputs = depth_decoder(*features)
+        verify_decoder(outputs, gt_outputs)
+
+    # JIT Trace
+    encoder_module = torch.jit.trace(encoder, image)
+    depth_decoder_module = torch.jit.trace(depth_decoder, features)
+
+    # Serialize & Save
+    t_encoder_path = os.path.join("models", model, "t_encoder.pt")
+    t_depth_decoder_path = os.path.join("models", model, "t_depth.pt")
+    encoder_module.save(t_encoder_path)
+    depth_decoder_module.save(t_depth_decoder_path)
 
 
 def main():
-    convert_pretrained()
+    model = "mono_640x192"
+    convert_pretrained(model)
 
 
 if __name__ == "__main__":

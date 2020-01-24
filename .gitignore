@@ -2,6 +2,7 @@
 # Custom
 ThirdParty/
 data/
+models/
 *.zip
 
 

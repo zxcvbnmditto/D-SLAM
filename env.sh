@@ -17,12 +17,13 @@ elif [ "$1" == "run" ]; then
   echo -e "Building Docker Container $DEFAULT_NAME \n\n"
   xhost +local:docker                            # Display
   docker run -it \
-             --name=$DEFAULT_NAME \
+             --name=vslam_webcam \
+             --device=/dev/video0:/dev/video0:rw \
              --gpus all \
              -e DISPLAY=$DISPLAY \
              -v /tmp/.X11-unix:/tmp/.X11-unix \
              -v $PROJECT_PATH:/vslam \
-             $DEFAULT_NAME:latest \
+             $DEFAULT_NAME:all \
              /bin/bash
 else
   xhost +local:docker                            # Display

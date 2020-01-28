@@ -67,6 +67,14 @@ To run monodepth, simply supply an image or a image directory and modify the fol
 python test_simple.py --image_path assets/test_image.jpg --model_name mono+stereo_640x192
 ```
 
+C++ Depth Estimation
+```bash
+mkdir build
+cd build
+cmake -D Torch_DIR=ThirdParty/libtorch/share/cmake/Torch ..
+./GET_DEPTH_FROM_DIR <input-image-path> <output-image-path> /vslam/models/mono_640x192/t_encoder.pt /vslam/models/mono_640x192/t_depth.pt
+```
+
 ## Note
 #### Important
 - Used OpenCV = 4.2.0, CUDA 10.0.0

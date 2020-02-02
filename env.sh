@@ -23,7 +23,7 @@ elif [ "$1" == "run" ]; then
              -e DISPLAY=$DISPLAY \
              -v /tmp/.X11-unix:/tmp/.X11-unix \
              -v $PROJECT_PATH:/vslam \
-             $DEFAULT_NAME:all \
+             $DEFAULT_NAME:latest \
              /bin/bash
 else
   xhost +local:docker                            # Display

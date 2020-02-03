@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
 import sys
-sys.path.append("./ThirdParty/monodepth2")
+sys.path.append("/vslam/ThirdParty/monodepth2")
 
 import torch.nn as nn
 import torch
@@ -16,7 +16,7 @@ import torchvision
 
 
 def load_example_image(loaded_dict_enc):
-    image_path = "data/depth/test_image.jpg"
+    image_path = "/vslam/data/depth/test_image.jpg"
     input_image = pil.open(image_path).convert('RGB')
     original_width, original_height = input_image.size
 
@@ -48,8 +48,8 @@ def verify_decoder(outputs, gt_outputs):
 
 def convert_pretrained(model):
     # Pretrained Weights
-    encoder_path = os.path.join("models", model, "encoder.pth")
-    depth_decoder_path = os.path.join("models", model, "depth.pth")
+    encoder_path = os.path.join("/vslam/models", model, "encoder.pth")
+    depth_decoder_path = os.path.join("/vslam/models", model, "depth.pth")
 
     # Model Architechture
     encoder = networks.ResnetEncoder(18, False)
@@ -87,14 +87,14 @@ def convert_pretrained(model):
     depth_decoder_module = torch.jit.trace(depth_decoder, features)
 
     # Serialize & Save
-    t_encoder_path = os.path.join("models", model, "t_encoder.pt")
-    t_depth_decoder_path = os.path.join("models", model, "t_depth.pt")
+    t_encoder_path = os.path.join("/vslam/models", model, "t_encoder.pt")
+    t_depth_decoder_path = os.path.join("/vslam/models", model, "t_depth.pt")
     encoder_module.save(t_encoder_path)
     depth_decoder_module.save(t_depth_decoder_path)
 
 
 def main():
-    model = "mono_640x192"
+    model = "mono_1024x320"
     convert_pretrained(model)
 
 

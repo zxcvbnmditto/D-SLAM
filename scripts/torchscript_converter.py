@@ -13,6 +13,33 @@ import os
 import networks
 from torchvision import transforms
 import torchvision
+import argparse
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='Simple script to convert Monodepth2 Model with torchscript')
+
+    parser.add_argument('--model_name', type=str,
+                        help='name of a pretrained model to use',
+                        choices=[
+                            "mono_640x192",
+                            "mono_1024x320"],
+                        default="mono_640x192")
+
+    parser.add_argument('--model_path', type=str,
+                        help='path to models',
+                        default="/vslam/models")
+
+    parser.add_argument('--encoder_name', type=str,
+                        help='name of a encoder model to save',
+                        default="t_encoder.pt")
+
+    parser.add_argument('--decoder_name', type=str,
+                        help='name of a decoder model to save',
+                        default="t_decoder.pt")
+
+    return parser.parse_args()
 
 
 def load_example_image(loaded_dict_enc):
@@ -46,10 +73,10 @@ def verify_decoder(outputs, gt_outputs):
     print("Decoder Input Verified. Test Passed.")
 
 
-def convert_pretrained(model):
+def convert_pretrained(model, model_path, save_enc_name, save_dec_name):
     # Pretrained Weights
-    encoder_path = os.path.join("/vslam/models", model, "encoder.pth")
-    depth_decoder_path = os.path.join("/vslam/models", model, "depth.pth")
+    encoder_path = os.path.join(model_path, model, "encoder.pth")
+    depth_decoder_path = os.path.join(model_path, model, "depth.pth")
 
     # Model Architechture
     encoder = networks.ResnetEncoder(18, False)
@@ -87,15 +114,16 @@ def convert_pretrained(model):
     depth_decoder_module = torch.jit.trace(depth_decoder, features)
 
     # Serialize & Save
-    t_encoder_path = os.path.join("/vslam/models", model, "t_encoder.pt")
-    t_depth_decoder_path = os.path.join("/vslam/models", model, "t_depth.pt")
+    t_encoder_path = os.path.join(model_path, model, save_enc_name)
+    t_depth_decoder_path = os.path.join(model_path, model, save_dec_name)
     encoder_module.save(t_encoder_path)
     depth_decoder_module.save(t_depth_decoder_path)
 
 
 def main():
-    model = "mono_1024x320"
-    convert_pretrained(model)
+    args = parse_args()
+    convert_pretrained(args.model_name, args.model_path, args.encoder_name,
+                       args.decoder_name)
 
 
 if __name__ == "__main__":

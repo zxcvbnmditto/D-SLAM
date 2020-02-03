@@ -24,19 +24,12 @@ bool sort_filename(std::string s1, std::string s2)
 {
     size_t id1 = s1.find_last_of(".");
     size_t id2 = s2.find_last_of(".");
-
-    double val1 = std::stod(s1.substr(0, id1));
-    double val2 = std::stod(s2.substr(0, id2));
-
-    return val1 < val2;
+    return std::stod(s1.substr(0, id1)) < std::stod(s2.substr(0, id2));
 }
 
 bool sort_timestamp(std::string s1, std::string s2)
 {
-    double val1 = std::stod(s1);
-    double val2 = std::stod(s2);
-
-    return val1 < val2;
+    return std::stod(s1) < std::stod(s2);
 }
 
 std::vector<std::vector<std::string>> retrieve_kitti_data(const char *path)
@@ -49,8 +42,7 @@ std::vector<std::vector<std::string>> retrieve_kitti_data(const char *path)
         exit(-1);
     }
 
-    std::vector<std::string> imgs;
-    std::vector<std::string> timestamps;
+    std::vector<std::string> imgs, timestamps;
     while ((entry = readdir(dir)) != NULL)
     {
         std::string filename = entry->d_name;
@@ -106,22 +98,16 @@ int main(int argc, const char *argv[])
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM2::System SLAM(argv[5], argv[6], ORB_SLAM2::System::RGBD, true);
 
-    cout << endl
-         << "-------" << endl;
-    cout << "Start processing sequence ..." << endl;
-    cout << "Images in the sequence: " << nImages << endl
-         << endl;
-
     for (int ni = 0; ni < imgs.size(); ni++)
     {
         chrono::steady_clock::time_point start_time = chrono::steady_clock::now();
 
         // Load images
-        std::cout << "Input: " << in_path + '/' + imgs[ni] << std::endl;
         cv::Mat input_img = cv::imread(in_path + '/' + imgs[ni]);
         if (input_img.data == NULL)
             continue;
 
+        // Convert BGR to RGB
         cv::cvtColor(input_img, input_img, cv::COLOR_BGR2RGB);
 
         // Resize input images
@@ -136,62 +122,46 @@ int main(int argc, const char *argv[])
         input_tensor = input_tensor.permute({0, 3, 1, 2});
 
         // Create a vector of inputs.
-        std::vector<torch::jit::IValue> inputs;
-        inputs.push_back(input_tensor);
+        std::vector<torch::jit::IValue> inputs = {input_tensor};
+        // inputs.push_back(input_tensor);
 
-        std::chrono::steady_clock::time_point enc_1 = chrono::steady_clock::now();
         // Encoder
+        std::chrono::steady_clock::time_point enc_1 = chrono::steady_clock::now();
         auto features = encoder_module.forward(inputs).toTuple();
-
         chrono::steady_clock::time_point enc_2 = chrono::steady_clock::now();
 
         // Cast to std::vector<torch::jit::IValue> for decoder input
         std::vector<torch::jit::IValue> input_features;
         for (int i = 0; i < 5; i++)
-        {
             input_features.push_back(features->elements()[i].toTensor());
-        }
-
-        chrono::steady_clock::time_point dec_1 = chrono::steady_clock::now();
 
         // Decoder
+        chrono::steady_clock::time_point dec_1 = chrono::steady_clock::now();
         auto outputs = decoder_module.forward(input_features).toTuple();
-        // std::cout << at::_shape_as_tensor(outputs->elements()[3].toTensor()) << std::endl;
         chrono::steady_clock::time_point dec_2 = chrono::steady_clock::now();
 
-        // Resize
-        at::Tensor upsampled_tensor = torch::upsample_bilinear2d((outputs->elements()[3]).toTensor(), std::vector<int64_t>{ORINGAL_HEIGHT, ORINGAL_WIDTH}, false);
-
-        // Convert
-        cv::Mat rgb_img = input_img;
+        // Prepare Depth
         cv::Mat depth_img = cv::Mat::ones(ORINGAL_HEIGHT, ORINGAL_WIDTH, CV_32F);
-        // std::cout << "Before memcpy" << std::endl;
-        std::memcpy(depth_img.data, upsampled_tensor.data_ptr(), sizeof(float) * upsampled_tensor.numel());
+        at::Tensor depth_tensor = torch::upsample_bilinear2d((outputs->elements()[3]).toTensor(),
+                                                             std::vector<int64_t>{ORINGAL_HEIGHT, ORINGAL_WIDTH},
+                                                             false); // Upsampled to orignal img size
+        std::memcpy(depth_img.data, depth_tensor.data_ptr(),
+                    sizeof(float) * depth_tensor.numel());
         depth_img.convertTo(resized_img, CV_8UC1);
-        rgb_img.convertTo(rgb_img, CV_8UC3);
-        // std::cout << "After memcpy" << std::endl;
 
+        // Prepare Rgb
+        cv::Mat rgb_img = input_img;
+        rgb_img.convertTo(rgb_img, CV_8UC3);
+
+        // Prepare Time frame
         double t_frame = std::stod(vTimestamps[ni]);
 
-#ifdef COMPILEDWITHC11
-        chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
-#else
-        chrono::monotonic_clock::time_point t1 = chrono::monotonic_clock::now();
-#endif
-
         // Pass the image to the SLAM system
-        // std::cout << "Before Tracking" << std::endl;
+        chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
         SLAM.TrackRGBD(rgb_img, depth_img, t_frame);
-        // std::cout << "After Tracking" << std::endl;
-
-#ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
-#else
-        std::chrono::monotonic_clock::time_point t2 = std::chrono::monotonic_clock::now();
-#endif
 
         double ttrack = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
-
         vTimesTrack[ni] = ttrack;
 
         // Wait to load the next frame
@@ -205,7 +175,8 @@ int main(int argc, const char *argv[])
         //     usleep((T - ttrack) * 1e6);
 
         chrono::steady_clock::time_point end_time = chrono::steady_clock::now();
-        std::cout << "Encoder Time: " << chrono::duration_cast<chrono::duration<double>>(enc_2 - enc_1).count() << std::endl
+        std::cout << "Input Image: " << in_path + '/' + imgs[ni] << std::endl
+                  << "Encoder Time: " << chrono::duration_cast<chrono::duration<double>>(enc_2 - enc_1).count() << std::endl
                   << "Decoder Time: " << chrono::duration_cast<chrono::duration<double>>(dec_2 - dec_1).count() << std::endl
                   << "Track Time: " << std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count() << std::endl
                   << "Iter Time: " << chrono::duration_cast<chrono::duration<double>>(end_time - start_time).count() << std::endl;

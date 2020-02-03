@@ -57,15 +57,14 @@ add_library(${PROJECT_NAME} SHARED
     ${ORB_SLAM_DIRECTORY}/src/Viewer.cc
 )
 
-# message(${OpenCV_LIBS})
 target_link_libraries(${PROJECT_NAME}
     ${OpenCV_LIBS}
     ${EIGEN3_LIBS}
     ${Pangolin_LIBRARIES}
     ${TORCH_LIBRARIES}
-    /vslam/ThirdParty/orbslam2/Thirdparty/DBoW2/lib/libDBoW2.so
-    /vslam/ThirdParty/orbslam2/Thirdparty/g2o/lib/libg2o.so
-    /vslam/ThirdParty/orbslam2/lib/libORB_SLAM2.so
+    ${ORB_SLAM_DIRECTORY}/Thirdparty/DBoW2/lib/libDBoW2.so
+    ${ORB_SLAM_DIRECTORY}/Thirdparty/g2o/lib/libg2o.so
+    ${ORB_SLAM_DIRECTORY}/lib/libORB_SLAM2.so
 )
 
 add_executable( VIDEO_CAPTURE_DEMO src/video_capture_demo.cpp )

@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
 import sys
-sys.path.append("./ThirdParty/monodepth2")
+sys.path.append("/vslam/ThirdParty/monodepth2")
 
 import torch.nn as nn
 import torch
@@ -13,10 +13,38 @@ import os
 import networks
 from torchvision import transforms
 import torchvision
+import argparse
+import errno
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='Simple script to convert Monodepth2 Model with torchscript')
+
+    parser.add_argument('--model_name', type=str,
+                        help='name of a pretrained model to use',
+                        choices=[
+                            "mono_640x192",
+                            "mono_1024x320"],
+                        default="mono_640x192")
+
+    parser.add_argument('--model_path', type=str,
+                        help='path to models',
+                        default="/vslam/models")
+
+    parser.add_argument('--encoder_name', type=str,
+                        help='name of a encoder model to save',
+                        default="t_encoder.pt")
+
+    parser.add_argument('--decoder_name', type=str,
+                        help='name of a decoder model to save',
+                        default="t_decoder.pt")
+
+    return parser.parse_args()
 
 
 def load_example_image(loaded_dict_enc):
-    image_path = "data/depth/test_image.jpg"
+    image_path = "/vslam/data/depth/test_image.jpg"
     input_image = pil.open(image_path).convert('RGB')
     original_width, original_height = input_image.size
 
@@ -46,10 +74,10 @@ def verify_decoder(outputs, gt_outputs):
     print("Decoder Input Verified. Test Passed.")
 
 
-def convert_pretrained(model):
+def convert_pretrained(model, model_path, save_enc_name, save_dec_name):
     # Pretrained Weights
-    encoder_path = os.path.join("models", model, "encoder.pth")
-    depth_decoder_path = os.path.join("models", model, "depth.pth")
+    encoder_path = os.path.join(model_path, model, "encoder.pth")
+    depth_decoder_path = os.path.join(model_path, model, "depth.pth")
 
     # Model Architechture
     encoder = networks.ResnetEncoder(18, False)
@@ -57,12 +85,20 @@ def convert_pretrained(model):
         num_ch_enc=encoder.num_ch_enc, scales=range(4))
 
     # Load pretrained weights into model
-    loaded_dict_enc = torch.load(encoder_path, map_location='cpu')
+    try:
+        loaded_dict_enc = torch.load(encoder_path, map_location='cpu')
+    except FileNotFoundError as err:
+        print("{}} Cannot load encoder file {}".format(err, encoder_path))
+
     filtered_dict_enc = {
         k: v for k, v in loaded_dict_enc.items() if k in encoder.state_dict()}
     encoder.load_state_dict(filtered_dict_enc)
 
-    loaded_dict = torch.load(depth_decoder_path, map_location='cpu')
+    try:
+        loaded_dict = torch.load(depth_decoder_path, map_location='cpu')
+    except FileNotFoundError as err:
+        print("{} Cannot load decoder file {}".format(err, depth_decoder_path))
+
     depth_decoder.load_state_dict(loaded_dict)
 
     # Set to Eval mode
@@ -87,15 +123,16 @@ def convert_pretrained(model):
     depth_decoder_module = torch.jit.trace(depth_decoder, features)
 
     # Serialize & Save
-    t_encoder_path = os.path.join("models", model, "t_encoder.pt")
-    t_depth_decoder_path = os.path.join("models", model, "t_depth.pt")
+    t_encoder_path = os.path.join(model_path, model, save_enc_name)
+    t_depth_decoder_path = os.path.join(model_path, model, save_dec_name)
     encoder_module.save(t_encoder_path)
     depth_decoder_module.save(t_depth_decoder_path)
 
 
 def main():
-    model = "mono_640x192"
-    convert_pretrained(model)
+    args = parse_args()
+    convert_pretrained(args.model_name, args.model_path, args.encoder_name,
+                       args.decoder_name)
 
 
 if __name__ == "__main__":

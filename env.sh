@@ -4,7 +4,7 @@
 #   <arg1> - build / run / empty
 
 # Using same name for container & image here
-DEFAULT_NAME=vslam
+DEFAULT_NAME=vslam_cuda10_2
 PROJECT_PATH=$(pwd)
 
 if [ "$1" == "build" ]; then
@@ -17,13 +17,13 @@ elif [ "$1" == "run" ]; then
   echo -e "Building Docker Container $DEFAULT_NAME \n\n"
   xhost +local:docker                            # Display
   docker run -it \
-             --name=vslam_webcam \
+             --name=$DEFAULT_NAME \
              --device=/dev/video0:/dev/video0:rw \
-             --gpus all \
+             --gpus device=0 \
              -e DISPLAY=$DISPLAY \
              -v /tmp/.X11-unix:/tmp/.X11-unix \
              -v $PROJECT_PATH:/vslam \
-             $DEFAULT_NAME:all \
+             $DEFAULT_NAME:latest \
              /bin/bash
 else
   xhost +local:docker                            # Display

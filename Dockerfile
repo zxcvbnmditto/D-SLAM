@@ -1,4 +1,4 @@
-FROM nvidia/cudagl:10.0-devel-ubuntu18.04
+FROM nvidia/cudagl:10.2-devel-ubuntu18.04
 
 ######################################
 # SECTION 1: Essentials              #

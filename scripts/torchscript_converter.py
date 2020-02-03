@@ -14,6 +14,7 @@ import networks
 from torchvision import transforms
 import torchvision
 import argparse
+import errno
 
 
 def parse_args():
@@ -84,12 +85,20 @@ def convert_pretrained(model, model_path, save_enc_name, save_dec_name):
         num_ch_enc=encoder.num_ch_enc, scales=range(4))
 
     # Load pretrained weights into model
-    loaded_dict_enc = torch.load(encoder_path, map_location='cpu')
+    try:
+        loaded_dict_enc = torch.load(encoder_path, map_location='cpu')
+    except FileNotFoundError as err:
+        print("{}} Cannot load encoder file {}".format(err, encoder_path))
+
     filtered_dict_enc = {
         k: v for k, v in loaded_dict_enc.items() if k in encoder.state_dict()}
     encoder.load_state_dict(filtered_dict_enc)
 
-    loaded_dict = torch.load(depth_decoder_path, map_location='cpu')
+    try:
+        loaded_dict = torch.load(depth_decoder_path, map_location='cpu')
+    except FileNotFoundError as err:
+        print("{} Cannot load decoder file {}".format(err, depth_decoder_path))
+
     depth_decoder.load_state_dict(loaded_dict)
 
     # Set to Eval mode

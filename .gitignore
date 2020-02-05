@@ -3,7 +3,9 @@
 ThirdParty/
 data/
 *.zip
-
+models/
+.vscode/
+reminder.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

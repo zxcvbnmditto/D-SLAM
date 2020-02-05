@@ -11,4 +11,8 @@ sh $BASE_PATH/orbslam2.sh
 
 sh $BASE_PATH/monodepth2.sh
 
+# sh $BASE_PATH/cudnn.sh
 
+sh $BASE_PATH/cmake.sh
+
+# sh $BASE_PATH/libtorch.sh

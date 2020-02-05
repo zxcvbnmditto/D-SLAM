@@ -4,7 +4,7 @@
 #   <arg1> - build / run / empty
 
 # Using same name for container & image here
-DEFAULT_NAME=vslam
+DEFAULT_NAME=vslam_cuda10_2
 PROJECT_PATH=$(pwd)
 
 if [ "$1" == "build" ]; then
@@ -18,7 +18,8 @@ elif [ "$1" == "run" ]; then
   xhost +local:docker                            # Display
   docker run -it \
              --name=$DEFAULT_NAME \
-             --gpus all \
+             --device=/dev/video0:/dev/video0:rw \
+             --gpus device=0 \
              -e DISPLAY=$DISPLAY \
              -v /tmp/.X11-unix:/tmp/.X11-unix \
              -v $PROJECT_PATH:/vslam \

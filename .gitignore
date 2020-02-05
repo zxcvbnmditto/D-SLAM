@@ -2,8 +2,8 @@
 # Custom
 ThirdParty/
 data/
-*.zip
 models/
+*.zip
 .vscode/
 reminder.txt
 

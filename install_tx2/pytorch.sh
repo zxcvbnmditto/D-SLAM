@@ -1,6 +1,6 @@
 # !/bin/bash
 
-# Resource: 
+# Resource:
 # https://devtalk.nvidia.com/default/topic/1049071/jetson-nano/pytorch-for-jetson-nano-with-new-torch2trt-converter/
 # https://blog.csdn.net/qq_33869371/article/details/88591538
 
@@ -19,31 +19,31 @@ TORCHVISION_VERSION=0.5.0
 # rm torch-1.4.0-cp36-cp36m-linux_aarch64.whl
 
 
-# Build from scratch (libtorch cmake error at compile time)
-echo -e "################################################################################\n"
-echo -e "Install Pytorch \n\n"
-git clone https://github.com/pytorch/pytorch.git ${BASE_DIR}/pytorch
-cd ${BASE_DIR}/pytorch
-git checkout v{PYTORCH_VERSION}
-git submodule update --init
-sudo pip3 install -r requirements.txt
-git submodule update --init --recursive
+# # Build from scratch (libtorch cmake error at compile time)
+# echo -e "################################################################################\n"
+# echo -e "Install Pytorch \n\n"
+# git clone https://github.com/pytorch/pytorch.git ${BASE_DIR}/pytorch
+# cd ${BASE_DIR}/pytorch
+# git checkout v{PYTORCH_VERSION}
+# sudo pip3 install -r requirements.txt
+# git submodule update --init --recursive
 
-# Turn on to max mode
-echo -e "TX2 Performance Mode On"
-sudo nvpmodel -m 0
-sudo jetson_clocks.sh
+# # Turn on to max mode
+# echo -e "TX2 Performance Mode On"
+# sudo nvpmodel -m 0
+# sudo jetson_clocks.sh
 
-# Apply following changes before continue
-# CmakeLists.txt : Change NCCL to 'Off' on line 148
-# setup.py: Add cmake_cache_vars['USE_NCCL'] = False below line 397
-sudo python3 setup.py develop
+# # Apply following changes before continue
+# # CmakeLists.txt : Change NCCL to 'Off' on line 148
+# # setup.py: Add cmake_cache_vars['USE_NCCL'] = False below line 397
+# sudo python3 setup.py develop
 
-# Libtorch
-echo -e "################################################################################\n"
-echo -e "Install Libtorch \n\n"
-cd ${BASE_DIR}/pytorch/build
-sudo python3 ${BASE_DIR}/pytorch/tools/build_libtorch.py
+# # Libtorch
+# echo -e "################################################################################\n"
+# echo -e "Install Libtorch \n\n"
+# cd ${BASE_DIR}/pytorch/build
+# sudo python3 ${BASE_DIR}/pytorch/tools/build_libtorch.py
+
 cd ${BASE_DIR}
 
 # TorchVision

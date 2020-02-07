@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Define Variables
-BASE_DIR=/home/vslam/VSLAM-2020
+BASE_DIR=~/VSLAM-2020
 INSTALL_PATH=$BASE_DIR/install
-LIB_PATH=~$BASE_DIR/ThirdParty
+LIB_PATH=$BASE_DIR/ThirdParty
 PANGOLIN_PATH=$LIB_PATH/pangolin
 
 # Required Dependencies

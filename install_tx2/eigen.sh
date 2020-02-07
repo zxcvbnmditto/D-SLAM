@@ -1,6 +1,6 @@
 
 # Define Variables
-BASE_DIR=/home/vslam/VSLAM-2020
+BASE_DIR=~/VSLAM-2020
 INSTALL_PATH=$BASE_DIR/install
 LIB_PATH=$BASE_DIR/ThirdParty
 EIGEN_PATH=$LIB_PATH/eigen

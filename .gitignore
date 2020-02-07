@@ -1,11 +1,16 @@
 
 # Custom
 ThirdParty/
-data/
+data/*
 models/
 *.zip
 .vscode/
 reminder.txt
+
+# Keep
+!data/depth
+data/depth/*
+!data/depth/test_image.jpg
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

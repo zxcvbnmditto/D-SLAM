@@ -28,7 +28,13 @@ For more details, please refer to installation scripts
 
 
 ## Data Preparation
-### ORB-SLAM RGB Images
+### Compile ORB-SLAM2
+```
+cd <path-to-orbslam2>
+./build.sh
+```
+
+### ORB-SLAM2 RGB Images
 First, we will create a directory that holds all the data.
 ```bash
 # Note, you might want to install on an external disk if working with TX2

@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Define Variables
-LIB_PATH=/vslam/ThirdParty
+BASE_DIR=~/VSLAM-2020
+LIB_PATH=${BASE_DIR}/ThirdParty
 MONODEPTH2_PATH=$LIB_PATH/monodepth2
 
 # Install Monodepth2

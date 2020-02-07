@@ -1,94 +1,117 @@
 # VSLAM-2020
+This project proposed a monocular SLAM system. Depth estimation is being used to guide the SLAM system.
 
 ## Environment
-The enivorment can be all setup using the scripts provided.
+We have setups for both x86(Docker) and Jetson-TX2.
 
-#### Installation
+
+The following is a quick comparison between the environments, which include a list of libraries and versions we tested it on.
+|              | Docker  | Jetson-TX2  | Recomemnd |
+|---           |---      |---|---|
+|  Cuda        | 10.2         | 10.0   | 10.0  |
+|  Cudnn       | 7.6.5        | 7.6.3  | 7.6.0  |
+|  OpenCV      | 4.2.0        | 4.1.1  | 4.0.0  |
+|  Pytorch     | 1.4.0        | 1.4.0  | 1.4.0  |
+|  Torchvision | 0.5.0        | 0.5.0  | 1.5.0  |
+
+
+The following libraries are also necessary, but the version should be less restrictive.
+- Eigen
+- Pangolin
+- OpenGL
+- Numpy
+- Matplotlib
+
+Check out guide to setup for [x86](docs/Docker_setup.md) [tx2](docs/TX2_setup.md)
+
+For more details, please refer to installation scripts
+
+
+## Data Preparation
+### ORB-SLAM RGB Images
+First, we will create a directory that holds all the data.
 ```bash
-# Create Docker Image
-(host) ./env.sh build
-
-# Create Docker Container
-(host) ./env.sh run
-
-# Install every other dependent libraries
-(container) sh /vslam/install/setup_all.sh
-```
-To manipulate enviroment setup, checkout
-- Dockerfile       => Define third-party libraries' complex (non-interpretible) libs
-- env.sh           => Define rules to manage docker container
-- install/*.sh     => Define how to install a particular thrid-party libraries
-- requirements.txt => Define list of python libs & version
-
-
-#### Prerequisite / Third-Party Libraries
-The following is an overview of third-party libraries that ORBSLAM2 and Monodepth2 depends on.
-
-- ORBSLAM
-  - Eigen
-  - Pangolin
-    - OpenGL
-  - OpenCV
-- Monodepth2
-  - Pytorch
-  - torchvision
-  - numpy
-  - matplotlib
-
-## Run
-First, we will create a directory that holds all the data. You should do this on the host computer, and the data should be mounted into the container if you have followed the installation steps correctly.
-```bash
+# Note, you might want to install on an external disk if working with TX2
 mkdir -p <path-to-project-root>/data
 ```
 
-Next, download the data. Here we will be using KITTI Odometry grayscale as example. You can download from [here](http://www.cvlibs.net/datasets/kitti/eval_odometry.php) or follow the script below.
+Download the [KITTI Odometry rgb dataset](http://www.cvlibs.net/datasets/kitti/eval_odometry.php). You will need the rgb one to run our VSLAM.
 ```bash
 # Download KITTI Odometry grayscale
-wget http://www.cvlibs.net/download.php?file=data_odometry_gray.zip
-unzip data_odometry_gray.zip
+wget http://www.cvlibs.net/download.php?file=data_odometry_rgb.zip
+unzip data_odometry_rgb.zip
 
 # Remove zip if desired
-rm data_odometry_gray.zip
+rm data_odometry_rgb.zip
 
 # Rename Directory
-mv dataset kitti-gray-odometry
+mv dataset kitti-rgb-odometry
 
 # Move Directory
-mv kitti-gray-odometry <path-to-project-root>/data
+mv kitti-rgb-odometry <path-to-project-root>/data
 ```
 
-Run the ORB-SLAM2 simulation
+### Monodepth2 Models
+Download the models from [Monodepth2](https://github.com/nianticlabs/monodepth2). Again create a directory that holds these models.
 ```bash
-./Examples/Monocular/mono_kitti Vocabulary/ORBvoc.txt Examples/Monocular/KITTI03.yaml /vslam/data/kitti-gray-odometry/sequences/03
+# Note, you might want to install on an external disk if working with TX2
+mkdir -p <path-to-project-root>/models
 ```
 
-To run monodepth, simply supply an image or a image directory and modify the following command
+
+## Additional Required Setup
+### Rename Kitti Images
+You will have to rename kitti images with timestamps. We have provide the script to do so.
 ```bash
-python test_simple.py --image_path assets/test_image.jpg --model_name mono+stereo_640x192
+cd  <path-to-project-root>/scripts
+# Follow the prompt for args
+./kitti_rename_timestamp.sh
 ```
 
-C++ Depth Estimation
+### Convert Pre-trained Model
+Assume you have already downloaded the pretrained monodepth2 model, you will have to run the provide script to generate a C++ understandable model format.
+```bash
+# Replace following monodepth2 source files with the provided ones
+rm  <path-to-project-root>/ThirdParty/monodepth2/networks/depth_decoder.py
+rm  <path-to-project-root>/ThirdParty/monodepth2/networks/resnet_encoder.py
+cp  <path-to-project-root>/others/* <path-to-project-root>/ThirdParty/monodepth2/networks
+
+cd scripts
+# Follow the prompt for args
+./torchscript_converter.sh
+```
+
+## Run
+### VSLAM
 ```bash
 mkdir build
 cd build
+
+# Build on Docker
 cmake -D Torch_DIR=ThirdParty/libtorch/share/cmake/Torch ..
-./GET_DEPTH_FROM_DIR <input-image-path> <output-image-path> /vslam/models/mono_640x192/t_encoder.pt /vslam/models/mono_640x192/t_depth.pt
+# Build on TX2
+cmake -D Torch_DIR=ThirdParty/pytorch/share/cmake/Torch ..
+make -j
+
+cd scripts
+# Follow the prompt for args
+./mono_slam_demo.sh
 ```
 
-## Note
-#### Important
-- Used OpenCV = 4.2.0, CUDA 10.0.0
-- Not using the official ORBSLAM2 but here due to OpenCV4.2.0 bug fix
-- It takes very long when running setup_all.sh. It will hang around 83% for pretty long when installing OpenCV
-- Currently bind mount entire directory
+### Original ORB-SLAM2 simulation
+```bash
+# Follow the prompt for args
+./orb_demo.sh
+```
 
-#### Other
-- Verified ORBSLAM2 runs with KITTI grayscale odometry
-- Verified Monodepth2 provided script can generate depth properly
-- Good to verify if OpenCV is install properly, including if actually benefiting from using GPU
-- Good to intestigate managing data btw host and container, especially when data is large
-- Need to setup more libs for the interface task
-- Need to test on different setup. CUDA version can be a problem
+### Original Monodepth2 simulation
+```bash
+# Follow the prompt for args
+./monodepth2_demo.sh
+```
+
+### Others
+Checkout [scripts](scripts/) for more provided utilities.
 
 
 ## Credit

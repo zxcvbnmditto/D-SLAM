@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
 import sys
-sys.path.append("/vslam/ThirdParty/monodepth2")
+sys.path.append("../ThirdParty/monodepth2")
 
 import torch.nn as nn
 import torch
@@ -32,6 +32,10 @@ def parse_args():
                         help='path to models',
                         default="/vslam/models")
 
+    parser.add_argument('--sample_image', type=str,
+                        help='path to sample img',
+                        default="/vslam/data/depth/test_image.jpg")
+
     parser.add_argument('--encoder_name', type=str,
                         help='name of a encoder model to save',
                         default="t_encoder.pt")
@@ -43,8 +47,8 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_example_image(loaded_dict_enc):
-    image_path = "/vslam/data/depth/test_image.jpg"
+def load_example_image(example_img, loaded_dict_enc):
+    image_path = example_img
     input_image = pil.open(image_path).convert('RGB')
     original_width, original_height = input_image.size
 
@@ -74,7 +78,7 @@ def verify_decoder(outputs, gt_outputs):
     print("Decoder Input Verified. Test Passed.")
 
 
-def convert_pretrained(model, model_path, save_enc_name, save_dec_name):
+def convert_pretrained(model, model_path, example_img, save_enc_name, save_dec_name):
     # Pretrained Weights
     encoder_path = os.path.join(model_path, model, "encoder.pth")
     depth_decoder_path = os.path.join(model_path, model, "depth.pth")
@@ -88,7 +92,7 @@ def convert_pretrained(model, model_path, save_enc_name, save_dec_name):
     try:
         loaded_dict_enc = torch.load(encoder_path, map_location='cpu')
     except FileNotFoundError as err:
-        print("{}} Cannot load encoder file {}".format(err, encoder_path))
+        print("{} Cannot load encoder file {}".format(err, encoder_path))
 
     filtered_dict_enc = {
         k: v for k, v in loaded_dict_enc.items() if k in encoder.state_dict()}
@@ -106,7 +110,7 @@ def convert_pretrained(model, model_path, save_enc_name, save_dec_name):
     depth_decoder.eval()
 
     # Forward
-    image = load_example_image(loaded_dict_enc)
+    image = load_example_image(example_img, loaded_dict_enc)
     with torch.no_grad():
         # Encoder
         gt_features = encoder.forward_original(image)
@@ -131,8 +135,8 @@ def convert_pretrained(model, model_path, save_enc_name, save_dec_name):
 
 def main():
     args = parse_args()
-    convert_pretrained(args.model_name, args.model_path, args.encoder_name,
-                       args.decoder_name)
+    convert_pretrained(args.model_name, args.model_path, args.sample_image,
+                       args.encoder_name, args.decoder_name)
 
 
 if __name__ == "__main__":

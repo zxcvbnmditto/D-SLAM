@@ -11,7 +11,6 @@ if [ "$1" == "build" ]; then
   echo -e "################################################################################\n"
   echo -e "Building Docker Image $DEFAULT_NAME \n\n"
   docker build -t $DEFAULT_NAME .
-
 elif [ "$1" == "run" ]; then
   echo -e "################################################################################\n"
   echo -e "Building Docker Container $DEFAULT_NAME \n\n"

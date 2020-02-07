@@ -42,8 +42,9 @@ fi
 
 OUTPUT_DIR=${DATA_DIR}/kitti-rgb-output/${KITTI_SEQUENCE}/rgb
 if [ ! -d ${OUTPUT_DIR} ]; then
-    echo -e "${RED}Cannot find output images directory at ${OUTPUT_DIR} ${NC}"
-    exit 2 # Failure
+    mkdir -p ${OUTPUT_DIR}
+else
+    rm ${OUTPUT_DIR}/*
 fi
 
 echo -e "${GREEN}Renaming Kitti RGB images with timestamp as filenames${NC}"

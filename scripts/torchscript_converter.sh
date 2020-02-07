@@ -17,7 +17,6 @@ if [ "$1" = "docker" ]; then
 
 elif [ "$1" = "tx2" ]; then
     echo -e "${GREEN}Environment - Jetson-TX2${NC}"
-Docker
     DATA_DIR=/media/vslam/SSD250/data
     MODEL_PATH=/media/vslam/SSD250/models
 else
@@ -49,7 +48,7 @@ if [ ! -d ${MODEL_PATH}/${MODEL_NAME} ]; then
 fi
 
 echo -e "${GREEN}Running Monodepth2 Model Conversion${NC}"
-python3 torchscript_converter.py \
+python3 src/torchscript_converter.py \
     --model_name="${MODEL_NAME}" \
     --model_path=${MODEL_PATH} \
     --sample_image=${SAMPLE_IMG} \

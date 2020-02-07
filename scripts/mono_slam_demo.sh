@@ -11,18 +11,14 @@ echo -e "${YELLOW}Usage: mono_slam_demo.sh <ENV> <SEQUENCE_NUMBER> <DEPTH_MODEL_
 # ENV
 if [ "$1" = "docker" ]; then
     echo -e "${GREEN}Environment - Docker${NC}"
-    # On Docker
     ORB_DIR=/vslam/ThirdParty/orbslam2
     BASE_DIR=/vslam
     EXEUTABLE=/vslam/build/MONODEPTH_SLAM
-
 elif [ "$1" = "tx2" ]; then
     echo -e "${GREEN}Environment - Jetson-TX2${NC}"
-    # On TX2
     ORB_DIR=~/VSLAM-2020/ThirdParty/orbslam2
     BASE_DIR=/media/vslam/SSD250
     EXEUTABLE=~/VSLAM-2020/build/MONODEPTH_SLAM
-
 else
     echo -e "${RED}Unknown argument for <ENV>. Allowed only \"docker\" or \"tx2\"${NC}"
     exit 1 # Failure

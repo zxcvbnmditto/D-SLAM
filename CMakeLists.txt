@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.0)
 project( VSLAM_2020 )
 
-find_package( OpenCV 4.2.0 REQUIRED )
+find_package( OpenCV 4.1.0 REQUIRED )
 find_package( Eigen3 3.1.0 REQUIRED)
 find_package( Pangolin REQUIRED)
 find_package( Torch REQUIRED )
@@ -73,5 +73,5 @@ target_link_libraries( VIDEO_CAPTURE_DEMO ${PROJECT_NAME} )
 add_executable( GET_DEPTH_FROM_DIR src/get_depth_from_dir.cpp )
 target_link_libraries( GET_DEPTH_FROM_DIR ${PROJECT_NAME})
 
-add_executable( MONODEPTH_SLAM src/monodepth_slam.cpp )
-target_link_libraries( MONODEPTH_SLAM ${PROJECT_NAME})
+add_executable( MONODEPTH_SLAM_DISK src/monodepth_slam_disk.cpp )
+target_link_libraries( MONODEPTH_SLAM_DISK ${PROJECT_NAME})

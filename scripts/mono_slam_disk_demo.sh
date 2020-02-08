@@ -13,12 +13,12 @@ if [ "$1" = "docker" ]; then
     echo -e "${GREEN}Environment - Docker${NC}"
     ORB_DIR=/vslam/ThirdParty/orbslam2
     BASE_DIR=/vslam
-    EXEUTABLE=/vslam/build/MONODEPTH_SLAM
+    EXEUTABLE=/vslam/build/MONODEPTH_SLAM_DISK
 elif [ "$1" = "tx2" ]; then
     echo -e "${GREEN}Environment - Jetson-TX2${NC}"
     ORB_DIR=~/VSLAM-2020/ThirdParty/orbslam2
     BASE_DIR=/media/vslam/SSD250
-    EXEUTABLE=~/VSLAM-2020/build/MONODEPTH_SLAM
+    EXEUTABLE=~/VSLAM-2020/build/MONODEPTH_SLAM_DISK
 else
     echo -e "${RED}Unknown argument for <ENV>. Allowed only \"docker\" or \"tx2\"${NC}"
     exit 1 # Failure

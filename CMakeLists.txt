@@ -67,6 +67,9 @@ target_link_libraries(${PROJECT_NAME}
     ${ORB_SLAM_DIRECTORY}/lib/libORB_SLAM2.so
 )
 
+
+add_executable( RUNTIME src/runtime_bm.cpp )
+
 add_executable( VIDEO_CAPTURE_DEMO src/video_capture_demo.cpp )
 target_link_libraries( VIDEO_CAPTURE_DEMO ${PROJECT_NAME} )
 

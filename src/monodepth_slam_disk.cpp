@@ -1,4 +1,4 @@
-
+#include <torch/torch.h>  // One-stop header.
 #include <torch/script.h> // One-stop header.
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
@@ -97,6 +97,14 @@ int main(int argc, const char *argv[])
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM2::System SLAM(argv[5], argv[6], ORB_SLAM2::System::RGBD, true);
+    torch::Device device = torch::kCPU;
+    if (torch::cuda::is_available())
+    {
+        std::cout << "CUDA is available! Training on GPU." << std::endl;
+        device = torch::kCUDA;
+    }
+    encoder_module.to(device);
+    decoder_module.to(device);
 
     for (int ni = 0; ni < imgs.size(); ni++)
     {
@@ -122,32 +130,34 @@ int main(int argc, const char *argv[])
         input_tensor = input_tensor.permute({0, 3, 1, 2});
 
         // Create a vector of inputs.
-        std::vector<torch::jit::IValue> inputs = {input_tensor};
-        // inputs.push_back(input_tensor);
+        std::vector<torch::jit::IValue> enc_inputs = {input_tensor.to(device)};
 
         // Encoder
         std::chrono::steady_clock::time_point enc_1 = chrono::steady_clock::now();
-        auto features = encoder_module.forward(inputs).toTuple();
+        auto enc_outputs = encoder_module.forward(enc_inputs).toTuple();
         chrono::steady_clock::time_point enc_2 = chrono::steady_clock::now();
 
         // Cast to std::vector<torch::jit::IValue> for decoder input
-        std::vector<torch::jit::IValue> input_features;
+        std::vector<torch::jit::IValue> dec_inputs;
         for (int i = 0; i < 5; i++)
-            input_features.push_back(features->elements()[i].toTensor());
+            dec_inputs.push_back(enc_outputs->elements()[i].toTensor().to(device));
 
         // Decoder
         chrono::steady_clock::time_point dec_1 = chrono::steady_clock::now();
-        auto outputs = decoder_module.forward(input_features).toTuple();
+        auto dec_outputs = decoder_module.forward(dec_inputs).toTuple();
         chrono::steady_clock::time_point dec_2 = chrono::steady_clock::now();
 
         // Prepare Depth
+        at::Tensor depth_map = (dec_outputs->elements()[3]).toTensor().to(torch::kCPU);
         cv::Mat depth_img = cv::Mat::ones(ORINGAL_HEIGHT, ORINGAL_WIDTH, CV_32F);
-        at::Tensor depth_tensor = torch::upsample_bilinear2d((outputs->elements()[3]).toTensor(),
+        at::Tensor depth_tensor = torch::upsample_bilinear2d(depth_map,
                                                              std::vector<int64_t>{ORINGAL_HEIGHT, ORINGAL_WIDTH},
                                                              false); // Upsampled to orignal img size
+
         std::memcpy(depth_img.data, depth_tensor.data_ptr(),
                     sizeof(float) * depth_tensor.numel());
-        depth_img.convertTo(resized_img, CV_8UC1);
+        depth_img.convertTo(depth_img, CV_32F); // FIXME
+        cv::imshow("Depth", depth_img);
 
         // Prepare Rgb
         cv::Mat rgb_img = input_img;
@@ -165,14 +175,14 @@ int main(int argc, const char *argv[])
         vTimesTrack[ni] = ttrack;
 
         // Wait to load the next frame
-        // double T = 0;
-        // if (ni < nImages - 1)
-        //     T = std::stod(vTimestamps[ni + 1]) - t_frame;
-        // else if (ni > 0)
-        //     T = t_frame - std::stod(vTimestamps[ni - 1]);
+        double T = 0;
+        if (ni < nImages - 1)
+            T = std::stod(vTimestamps[ni + 1]) - t_frame;
+        else if (ni > 0)
+            T = t_frame - std::stod(vTimestamps[ni - 1]);
 
-        // if (ttrack < T)
-        //     usleep((T - ttrack) * 1e6);
+        if (ttrack < T)
+            usleep((T - ttrack) * 1e6);
 
         chrono::steady_clock::time_point end_time = chrono::steady_clock::now();
         std::cout << "Input Image: " << in_path + '/' + imgs[ni] << std::endl

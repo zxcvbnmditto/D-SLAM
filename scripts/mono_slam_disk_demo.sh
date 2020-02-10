@@ -6,7 +6,7 @@ YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 
 # Usage
-echo -e "${YELLOW}Usage: mono_slam_demo.sh <ENV> <SEQUENCE_NUMBER> <DEPTH_MODEL_NAME> <YAML>${NC}"
+echo -e "${YELLOW}Usage: mono_slam_disk_demo.sh <ENV> <SEQUENCE_NUMBER> <DEPTH_MODEL_NAME> <YAML>${NC}"
 
 # ENV
 if [ "$1" = "docker" ]; then

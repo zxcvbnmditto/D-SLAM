@@ -4,6 +4,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/videoio.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
 #include <iostream>
 #include <memory>
 #include <stdio.h>
@@ -17,8 +18,8 @@
 #define M_HEIGHT 320
 #define M_WIDTH 1024
 
-#define ORINGAL_HEIGHT 376
-#define ORINGAL_WIDTH 1241
+#define ORINGAL_HEIGHT 370
+#define ORINGAL_WIDTH 1226
 
 bool sort_filename(std::string s1, std::string s2)
 {
@@ -97,6 +98,8 @@ int main(int argc, const char *argv[])
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM2::System SLAM(argv[5], argv[6], ORB_SLAM2::System::RGBD, true);
+    // ORB_SLAM2::System SLAM(argv[5], argv[6], ORB_SLAM2::System::MONOCULAR, true);
+
     torch::Device device = torch::kCPU;
     if (torch::cuda::is_available())
     {
@@ -156,12 +159,58 @@ int main(int argc, const char *argv[])
 
         std::memcpy(depth_img.data, depth_tensor.data_ptr(),
                     sizeof(float) * depth_tensor.numel());
-        depth_img.convertTo(depth_img, CV_32F); // FIXME
+        // depth_img.convertTo(depth_img, CV_32F); // FIXME
+        int min = 0.115;
+        int max = 100;
+        min = 1.0 / min;
+        max = 1.0 / max;
+        cv::Mat scale_disp = max + (min - max) * depth_img;
+        cv::Mat inverse_img = 1.0 / scale_disp;
+        // cv::absdiff(cv::Mat::ones(ORINGAL_HEIGHT, ORINGAL_WIDTH, CV_32F), depth_img, inverse_img);
+        cv::normalize(inverse_img, inverse_img, 0.9, 0, cv::NormTypes::NORM_MINMAX);
+
+        // cv::imshow("Depth2", inverse_img);
+        inverse_img.convertTo(inverse_img, CV_32F);
+        cv::imshow("Depth2", inverse_img);
+
+        cv::Mat inv_inv_img = inverse_img.clone();
+        cv::absdiff(cv::Mat::ones(ORINGAL_HEIGHT, ORINGAL_WIDTH, CV_32F), inv_inv_img, inv_inv_img);
+        cv::imshow("Depth3", inv_inv_img);
+
+        // cv::Mat depth_heatmap = depth_img.clone();
+        // depth_heatmap.convertTo(depth_heatmap, CV_8UC1, 255.0f);
+        // // depth_heatmap = depth_heatmap + 50;
+        // cv::applyColorMap(depth_heatmap, depth_heatmap, cv::ColormapTypes::COLORMAP_MAGMA);
+        // cv::normalize(depth_heatmap, depth_heatmap, 255, 0, cv::NormTypes::NORM_MINMAX);
+        // cv::imshow("Heat map", depth_heatmap);
+
+        // // cv::Mat norm_inverse_img;
+        // // cv::normalize(inverse_img, norm_inverse_img, 1, 0.2, cv::NormTypes::NORM_MINMAX);
+        // // cv::imshow("Depth3", norm_inverse_img);
+
+        // // depth_img = depth_heatmap;
+
+        // cv::Mat gray_img = input_img.clone();
+        // gray_img.convertTo(gray_img, CV_8UC1);
+        // gray_img += depth_heatmap;
+        // // cv::normalize(gray_img, gray_img, 255, 0, cv::NormTypes::NORM_MINMAX);
+        // cv::imshow("Depth3", gray_img);
+
+        depth_img = inv_inv_img.clone();
+        depth_img.convertTo(depth_img, CV_8U, 255.0);
         cv::imshow("Depth", depth_img);
+        depth_img.convertTo(depth_img, CV_32F);
+
+        // std::cout << "Mtx: " << std::endl
+        //           << depth_img << std::endl;
 
         // Prepare Rgb
-        cv::Mat rgb_img = input_img;
+        cv::Mat rgb_img = input_img.clone();
         rgb_img.convertTo(rgb_img, CV_8UC3);
+        // cv::Mat test_img = input_img.clone();
+        // test_img.convertTo(test_img, CV_8UC3);
+        // cv::cvtColor(test_img, test_img, cv::COLOR_RGB2BGR);
+        // cv::imshow("RGB", rgb_img);
 
         // Prepare Time frame
         double t_frame = std::stod(vTimestamps[ni]);
@@ -169,6 +218,7 @@ int main(int argc, const char *argv[])
         // Pass the image to the SLAM system
         chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
         SLAM.TrackRGBD(rgb_img, depth_img, t_frame);
+        // SLAM.TrackMonocular(rgb_img, t_frame);
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
 
         double ttrack = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count();
@@ -191,6 +241,8 @@ int main(int argc, const char *argv[])
                   << "Track Time: " << std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count() << std::endl
                   << "Iter Time: " << chrono::duration_cast<chrono::duration<double>>(end_time - start_time).count() << std::endl;
     }
+
+    SLAM.SaveTrajectoryKITTI("camera_trajectory.txt");
 
     // Stop all threads
     SLAM.Shutdown();

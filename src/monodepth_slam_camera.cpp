@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <thread>
 #include <mutex>
+#include <condition_variable>
 
 #include <System.h>
 #include "../include/monodepth2.h"
@@ -28,7 +29,11 @@
 #define VIDEO_WIDTH 1280
 #define VIDEO_FPS 30
 
-std::mutex counter_mutex;
+std::mutex lock_mutex;
+std::condition_variable cond_var1;
+std::condition_variable cond_var2;
+bool data_ready;
+bool depth_ready;
 
 void setupVideoObj(cv::VideoCapture &videoCapture)
 {
@@ -55,14 +60,16 @@ void get_frames(Monodepth2 &model, cv::Mat &input_img, double &t_frame, std::vec
 {
     while (model.isNotReady())
     {
+        // lock_mutex.lock();
+        std::lock_guard<std::mutex> guard(lock_mutex);
+        data_ready = false;
         videoCapture.read(input_img);
-        counter_mutex.lock();
         t_frame = videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_POS_MSEC);
         if (input_img.empty())
         {
             std::cerr << "ERROR! blank frame grabbed\n";
             std::cout << "Empty" << std::endl;
-            counter_mutex.unlock();
+            //lock_mutex.unlock();
             break;
         }
         cv::imshow("Input", input_img);
@@ -75,22 +82,33 @@ void get_frames(Monodepth2 &model, cv::Mat &input_img, double &t_frame, std::vec
         rgb_img.convertTo(input_img, CV_8UC3);
         rgb_imgs.push_back(rgb_img);
         t_frames.push_back(t_frame);
-        counter_mutex.unlock();
+        data_ready = true;
+        //lock_mutex.unlock();
+        cond_var1.notify_one();
     }
 }
 
 void get_depth(Monodepth2 &model, std::vector<cv::Mat> &depth_imgs)
 {
-    counter_mutex.lock();
+    // lock_mutex.lock();
+    std::unique_lock<std::mutex> uLock(lock_mutex);
+    depth_ready = false;
+    while(!data_ready)
+        cond_var1.wait(uLock);
     depth_imgs = model.forward(device);
-    counter_mutex.unlock();
+    depth_ready = true;
+    cond_var2.notify_one();
+    // lock_mutex.unlock();
 }
 
 void run_slam(ORB_SLAM2::System &SLAM, cv::Mat &rgb_img, cv::Mat &depth_img, cv::Mat &t_frame)
 {
-    counter_mutex.lock();
+    // lock_mutex.lock();
+    std::unique_lock<std::mutex> uLock(lock_mutex);
+    while (!depth_ready)
+        cond_var2.wait(uLock);
     SLAM.TrackRGBD(rgb_img, depth_img, t_frame);
-    counter_mutex.unlock();
+    // lock_mutex.unlock();
 }
 
 int main(int argc, const char *argv[])

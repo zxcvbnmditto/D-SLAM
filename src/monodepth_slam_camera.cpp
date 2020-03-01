@@ -64,7 +64,7 @@ int main(int argc, const char *argv[])
     }
 
     // Monodepth2
-    int batch = 1;
+    int batch = 5;
     Monodepth2 model(argv[1], argv[2], M_WIDTH, M_HEIGHT, VIDEO_WIDTH, VIDEO_HEIGHT, batch);
     model.loadModel(device);
 
@@ -104,21 +104,21 @@ int main(int argc, const char *argv[])
         while (model.isNotReady())
         {
             videoCapture.read(input_img);
-            t_frame = videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_POS_MSEC);
             if (input_img.empty())
             {
-                std::cerr << "ERROR! blank frame grabbed\n";
+                std::cout << "ERROR! blank frame grabbed" << std::endl;
                 std::cout << "Empty" << std::endl;
-                break;
+                continue;
             }
-            cv::imshow("Input", input_img);
+            t_frame = videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_POS_MSEC);
 
             // Convert BGR to RGB
             cv::cvtColor(input_img, input_img, cv::COLOR_BGR2RGB);
             model.addNewImage(input_img);
 
-            cv::Mat rgb_img;
+            cv::Mat rgb_img = input_img.clone();
             rgb_img.convertTo(input_img, CV_8UC3);
+            cv::imshow("Input", rgb_img);
             rgb_imgs.push_back(rgb_img);
             t_frames.push_back(t_frame);
         }
@@ -126,10 +126,12 @@ int main(int argc, const char *argv[])
         // Depth Prediction
         std::vector<cv::Mat> depth_imgs = model.forward(device);
 
-        // // Pass the image to the SLAM system
+        // Pass the image to the SLAM system
         chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
-        for (int i = 0; i < batch; i++)
+        for (unsigned int i = 0; i < rgb_imgs.size(); i++)
         {
+            // cv::imshow("RGB", rgb_imgs[i]);
+            // cv::imshow("Depth", depth_imgs[i]);
             SLAM.TrackRGBD(rgb_imgs[i], depth_imgs[i], t_frames[i]);
         }
         chrono::steady_clock::time_point t2 = chrono::steady_clock::now();

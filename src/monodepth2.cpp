@@ -37,6 +37,7 @@ void Monodepth2::loadModel(torch::Device device)
 
 bool Monodepth2::isNotReady()
 {
+    // std::cout << "Batch: " << this->inTensor.size() << std::endl;
     return this->inTensor.size() < this->batch;
 }
 
@@ -94,6 +95,20 @@ std::vector<cv::Mat> Monodepth2::retrieveDepthImages(at::Tensor depthTensor)
                                                       std::vector<int64_t>{this->iHeight, this->iWidth},
                                                       false); // Upsampled to orignal img size
         std::memcpy(depthImg.data, depth.data_ptr(), sizeof(float) * depth.numel());
+
+        int min = 0.115;
+        int max = 100;
+        min = 1.0 / min;
+        max = 1.0 / max;
+        cv::Mat scale_disp = max + (min - max) * depthImg;
+        cv::Mat inverse_img = 1.0 / scale_disp;
+        cv::normalize(inverse_img, inverse_img, 0.9, 0, cv::NormTypes::NORM_MINMAX);
+        inverse_img.convertTo(inverse_img, CV_32F);
+
+        cv::Mat inv_inv_img = inverse_img.clone();
+        cv::absdiff(cv::Mat::ones(iHeight, iWidth, CV_32F), inv_inv_img, inv_inv_img);
+
+        depthImg = inv_inv_img.clone();
         depthImgs.push_back(depthImg);
 
         if (this->showDepth)

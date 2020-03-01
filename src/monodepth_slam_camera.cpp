@@ -151,16 +151,15 @@ int main(int argc, const char *argv[])
         // Thread 1: fetches frames
         std::thread t1(get_frames, model, input_img, t_frame, rgb_imgs, t_frames)
 
-        // Depth Prediction
+        // Thread 2: Depth Prediction
         std::vector<cv::Mat> depth_imgs;
         std::thread t2(get_depth, model, depth_imgs);
 
         // Pass the image to the SLAM system
         chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
+        // Thread 3: Perform RGBD SLAM
         for (int i = 0; i < batch; i++)
-        {
             std::thread t3(run_slam, rgb_imgs[i], depth_imgs[i], t_frames[i]);
-        }
         chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
 
         chrono::steady_clock::time_point end_time = chrono::steady_clock::now();

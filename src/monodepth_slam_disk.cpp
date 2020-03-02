@@ -171,11 +171,11 @@ int main(int argc, const char *argv[])
 
         // cv::imshow("Depth2", inverse_img);
         inverse_img.convertTo(inverse_img, CV_32F);
-        cv::imshow("Depth2", inverse_img);
+        //cv::imshow("Depth2", inverse_img);
 
         cv::Mat inv_inv_img = inverse_img.clone();
         cv::absdiff(cv::Mat::ones(ORINGAL_HEIGHT, ORINGAL_WIDTH, CV_32F), inv_inv_img, inv_inv_img);
-        cv::imshow("Depth3", inv_inv_img);
+        //cv::imshow("Depth3", inv_inv_img);
 
         // cv::Mat depth_heatmap = depth_img.clone();
         // depth_heatmap.convertTo(depth_heatmap, CV_8UC1, 255.0f);

@@ -76,8 +76,21 @@ target_link_libraries( VIDEO_CAPTURE_DEMO ${PROJECT_NAME} )
 add_executable( GET_DEPTH_FROM_DIR src/get_depth_from_dir.cpp )
 target_link_libraries( GET_DEPTH_FROM_DIR ${PROJECT_NAME})
 
+#add_executable( VELODYNE_DEPTH src/velodyne_depth.cpp )
+#target_link_libraries( VELODYNE_DEPTH ${PROJECT_NAME})
+
 add_executable( MONODEPTH_SLAM_DISK src/monodepth_slam_disk.cpp )
 target_link_libraries( MONODEPTH_SLAM_DISK ${PROJECT_NAME})
 
-add_executable( MONODEPTH_SLAM_CAMERA src/monodepth_slam_camera.cpp )
+
+add_executable( MONODEPTH_SLAM_CAMERA
+    src/monodepth_slam_camera.cpp
+    src/monodepth2.cpp
+)
+
+target_include_directories(${PROJECT_NAME}
+    PUBLIC
+        ${PROJECT_SOURCE_DIR}/include
+)
+
 target_link_libraries( MONODEPTH_SLAM_CAMERA ${PROJECT_NAME})

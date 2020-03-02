@@ -56,41 +56,39 @@ void setupVideoObj(cv::VideoCapture &videoCapture)
               << "Video Aspect Ratio: " << videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_SAR_NUM) << std::endl;
 }
 
-void get_frames(Monodepth2 &model, cv::Mat &input_img, double &t_frame, std::vector<cv::Mat> &rgb_imgs, std::vector<double> &t_frames)
+void get_frames(torch::Device &device, cv::VideoCapture &videoCapture, Monodepth2 &model, cv::Mat &input_img, double &t_frame, std::vector<cv::Mat> &rgb_imgs, std::vector<double> &t_frames)
 {
+    std::lock_guard<std::mutex> guard(lock_mutex);
+    data_ready = false;
     while (model.isNotReady())
     {
-        // lock_mutex.lock();
-        std::lock_guard<std::mutex> guard(lock_mutex);
-        data_ready = false;
         videoCapture.read(input_img);
-        t_frame = videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_POS_MSEC);
+
         if (input_img.empty())
         {
-            std::cerr << "ERROR! blank frame grabbed\n";
+            std::cerr << "ERROR! blank frame grabbed" << std::endl;
             std::cout << "Empty" << std::endl;
-            //lock_mutex.unlock();
-            break;
+            continue;
         }
+        t_frame = videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_POS_MSEC);
         cv::imshow("Input", input_img);
 
         // Convert BGR to RGB
         cv::cvtColor(input_img, input_img, cv::COLOR_BGR2RGB);
         model.addNewImage(input_img);
 
-        cv::Mat rgb_img;
+        cv::Mat rgb_img = input_img.clone();
         rgb_img.convertTo(input_img, CV_8UC3);
+        cv::imshow("Input", rgb_img);
         rgb_imgs.push_back(rgb_img);
         t_frames.push_back(t_frame);
         data_ready = true;
-        //lock_mutex.unlock();
         cond_var1.notify_one();
     }
 }
 
-void get_depth(Monodepth2 &model, std::vector<cv::Mat> &depth_imgs)
+void get_depth(torch::Device &device, Monodepth2 &model, std::vector<cv::Mat> &depth_imgs)
 {
-    // lock_mutex.lock();
     std::unique_lock<std::mutex> uLock(lock_mutex);
     depth_ready = false;
     while(!data_ready)
@@ -98,17 +96,14 @@ void get_depth(Monodepth2 &model, std::vector<cv::Mat> &depth_imgs)
     depth_imgs = model.forward(device);
     depth_ready = true;
     cond_var2.notify_one();
-    // lock_mutex.unlock();
 }
 
-void run_slam(ORB_SLAM2::System &SLAM, cv::Mat &rgb_img, cv::Mat &depth_img, cv::Mat &t_frame)
+void run_slam(ORB_SLAM2::System &SLAM, cv::Mat &rgb_img, cv::Mat &depth_img, const double &t_frame)
 {
-    // lock_mutex.lock();
     std::unique_lock<std::mutex> uLock(lock_mutex);
     while (!depth_ready)
         cond_var2.wait(uLock);
     SLAM.TrackRGBD(rgb_img, depth_img, t_frame);
-    // lock_mutex.unlock();
 }
 
 int main(int argc, const char *argv[])
@@ -128,7 +123,7 @@ int main(int argc, const char *argv[])
     }
 
     // Monodepth2
-    int batch = 1;
+    int batch = 5;
     Monodepth2 model(argv[1], argv[2], M_WIDTH, M_HEIGHT, VIDEO_WIDTH, VIDEO_HEIGHT, batch);
     model.loadModel(device);
 
@@ -167,17 +162,23 @@ int main(int argc, const char *argv[])
         std::vector<double> t_frames;
         
         // Thread 1: fetches frames
-        std::thread t1(get_frames, model, input_img, t_frame, rgb_imgs, t_frames)
+        std::thread th1(get_frames, std::ref(device), std::ref(videoCapture), std::ref(model), std::ref(input_img), std::ref(t_frame), std::ref(rgb_imgs), std::ref(t_frames));
 
         // Thread 2: Depth Prediction
         std::vector<cv::Mat> depth_imgs;
-        std::thread t2(get_depth, model, depth_imgs);
+        std::thread th2(get_depth, std::ref(device), std::ref(model), std::ref(depth_imgs));
 
         // Pass the image to the SLAM system
         chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
         // Thread 3: Perform RGBD SLAM
-        for (int i = 0; i < batch; i++)
-            std::thread t3(run_slam, rgb_imgs[i], depth_imgs[i], t_frames[i]);
+        for (unsigned int i = 0; i < rgb_imgs.size(); i++) {
+             // cv::imshow("RGB", rgb_imgs[i]);
+             // cv::imshow("Depth", depth_imgs[i]);
+
+            std::thread th3(run_slam, std::ref(SLAM), std::ref(rgb_imgs[i]), std::ref(depth_imgs[i]), std::ref(t_frames[i]));
+            th3.join();
+        }
+            
         chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
 
         chrono::steady_clock::time_point end_time = chrono::steady_clock::now();
@@ -185,9 +186,8 @@ int main(int argc, const char *argv[])
                   << "Track Time: " << chrono::duration_cast<chrono::duration<double>>(t2 - t1).count() << std::endl
                   << "Iter Time: " << chrono::duration_cast<chrono::duration<double>>(end_time - start_time).count() << std::endl;
 
-        t1.join();
-        t2.join();
-        t3.join();
+        th1.join();
+        th2.join();
     }
     SLAM.Shutdown();
 }

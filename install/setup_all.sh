@@ -34,13 +34,13 @@ fi
 
 
 
-sh $BASE_DIR/pangolin.sh
+sh $BASE_DIR/pangolin.sh $1
 
-sh $BASE_DIR/eigen.sh
+sh $BASE_DIR/eigen.sh $1
 
-sh $BASE_DIR/orbslam2.sh
+sh $BASE_DIR/orbslam2.sh $1
 
-sh $BASE_DIR/monodepth2.sh
+sh $BASE_DIR/monodepth2.sh $1
 
 # Checking all dependencies exist
 echo -e "Setup has been completed @ $1"

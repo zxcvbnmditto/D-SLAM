@@ -36,7 +36,7 @@ if [ ! -f ${INSTALL_PATH}/3.3.3.tar.bz2 ]; then
     wget http://bitbucket.org/eigen/eigen/get/3.3.3.tar.bz2
 fi
 
-if [ ! -d ${INSTALL_PATH}/3.3.3.tar.bz2 ]; then
+if [ ! -f ${INSTALL_PATH}/3.3.3.tar.bz2 ]; then
     echo -e "${RED}Error occured on downloading Eigen \n"
     echo -e "${YELLOW}Please check your network or download through the following website: ${NC}"
     echo -e "http://bitbucket.org/eigen/eigen/get/3.3.3.tar.bz2"

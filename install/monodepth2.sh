@@ -23,12 +23,12 @@ else
 fi
 
 # Define Variables
-LIB_PATH=$LIB_PATH/ThirdParty
+LIB_PATH=$BASE_DIR/ThirdParty
 MONODEPTH2_PATH=$LIB_PATH/monodepth2
 
 # Install Monodepth2
 echo -e "################################################################################\n"
-echo -e "${GREEN}Install Monodepth2 \n\n"
+echo -e "${GREEN}Install Monodepth2 \n\n ${NC}"
 git clone https://github.com/nianticlabs/monodepth2.git $MONODEPTH2_PATH
 
 echo -e "${GREEN} monodepth2 Done ${NC}"

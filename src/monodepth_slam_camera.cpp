@@ -59,9 +59,11 @@ void setupVideoObj(cv::VideoCapture &videoCapture)
 void get_frames(torch::Device &device, cv::VideoCapture &videoCapture, Monodepth2 &model, cv::Mat &input_img, double &t_frame, std::vector<cv::Mat> &rgb_imgs, std::vector<double> &t_frames)
 {
     std::lock_guard<std::mutex> guard(lock_mutex);
+    std::cout << "Thread1" << std::endl;
     data_ready = false;
     while (model.isNotReady())
     {
+        // lock_mutex.lock();
         videoCapture.read(input_img);
 
         if (input_img.empty())
@@ -82,28 +84,38 @@ void get_frames(torch::Device &device, cv::VideoCapture &videoCapture, Monodepth
         cv::imshow("Input", rgb_img);
         rgb_imgs.push_back(rgb_img);
         t_frames.push_back(t_frame);
-        data_ready = true;
-        cond_var1.notify_one();
     }
+    data_ready = true;
+    //lock_mutex.unlock();
+    cond_var1.notify_one();
 }
 
 void get_depth(torch::Device &device, Monodepth2 &model, std::vector<cv::Mat> &depth_imgs)
 {
+    // lock_mutex.lock();
     std::unique_lock<std::mutex> uLock(lock_mutex);
     depth_ready = false;
     while(!data_ready)
         cond_var1.wait(uLock);
+    std::cout << "Thread2" << std::endl;
     depth_imgs = model.forward(device);
     depth_ready = true;
+    data_ready = false;
     cond_var2.notify_one();
+    // lock_mutex.unlock();
 }
 
-void run_slam(ORB_SLAM2::System &SLAM, cv::Mat &rgb_img, cv::Mat &depth_img, const double &t_frame)
+void run_slam(ORB_SLAM2::System &SLAM, std::vector<cv::Mat> &rgb_imgs, std::vector<cv::Mat> &depth_imgs, std::vector<double> &t_frames)
 {
+    // lock_mutex.lock();
     std::unique_lock<std::mutex> uLock(lock_mutex);
     while (!depth_ready)
         cond_var2.wait(uLock);
-    SLAM.TrackRGBD(rgb_img, depth_img, t_frame);
+    std::cout << "Thread3" << std::endl;
+     for (unsigned int i = 0; i < rgb_imgs.size(); i++)
+        SLAM.TrackRGBD(rgb_imgs[i], depth_imgs[i], t_frames[i]);
+    depth_ready = false;
+    // lock_mutex.unlock();
 }
 
 int main(int argc, const char *argv[])
@@ -116,14 +128,14 @@ int main(int argc, const char *argv[])
     }
 
     torch::Device device = torch::kCPU;
-    if (torch::cuda::is_available())
-    {
-        std::cout << "CUDA is available! Training on GPU." << std::endl;
-        device = torch::kCUDA;
-    }
+    // if (torch::cuda::is_available())
+    // {
+    //     std::cout << "CUDA is available! Training on GPU." << std::endl;
+    //     device = torch::kCUDA;
+    // }
 
     // Monodepth2
-    int batch = 5;
+    int batch = 2;
     Monodepth2 model(argv[1], argv[2], M_WIDTH, M_HEIGHT, VIDEO_WIDTH, VIDEO_HEIGHT, batch);
     model.loadModel(device);
 
@@ -171,14 +183,14 @@ int main(int argc, const char *argv[])
         // Pass the image to the SLAM system
         chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
         // Thread 3: Perform RGBD SLAM
-        for (unsigned int i = 0; i < rgb_imgs.size(); i++) {
-             // cv::imshow("RGB", rgb_imgs[i]);
-             // cv::imshow("Depth", depth_imgs[i]);
+        // for (unsigned int i = 0; i < rgb_imgs.size(); i++) {
+            // cv::imshow("RGB", rgb_imgs[i]);
+            // cv::imshow("Depth", depth_imgs[i]);
+            // std::cout << "Inside loop Thread3" << std::endl;
+        std::thread th3(run_slam, std::ref(SLAM), std::ref(rgb_imgs), std::ref(depth_imgs), std::ref(t_frames));
+            // th3.join();
+        //}
 
-            std::thread th3(run_slam, std::ref(SLAM), std::ref(rgb_imgs[i]), std::ref(depth_imgs[i]), std::ref(t_frames[i]));
-            th3.join();
-        }
-            
         chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
 
         chrono::steady_clock::time_point end_time = chrono::steady_clock::now();
@@ -188,6 +200,7 @@ int main(int argc, const char *argv[])
 
         th1.join();
         th2.join();
+        th3.join();
     }
     SLAM.Shutdown();
 }

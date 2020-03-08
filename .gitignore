@@ -6,6 +6,7 @@ models/
 *.zip
 .vscode/
 reminder.txt
+accuracy/
 
 # Keep
 !data/depth

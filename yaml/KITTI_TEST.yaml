@@ -19,7 +19,7 @@ Camera.p2: 0.0
 Camera.width: 1241
 Camera.height: 376
 
-# Camera frames per second 
+# Camera frames per second
 Camera.fps: 10.0
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
@@ -34,8 +34,11 @@ Camera.bf: 386.1448
 ThDepth: 35.0
 
 # New
-# Deptmap values factor
-DepthMapFactor: 0.125
+# Depthmap values factor
+DepthMapFactor: 1.0 # 0.03
+
+minDepth: 0.102
+maxDepth: 1000
 
 #--------------------------------------------------------------------------------------------
 # ORB Parameters
@@ -60,25 +63,25 @@ ORBextractor.minThFAST: 7
 #--------------------------------------------------------------------------------------------
 # Viewer Parameters
 #--------------------------------------------------------------------------------------------
-# Viewer.KeyFrameSize: 0.1
-# Viewer.KeyFrameLineWidth: 1
-# Viewer.GraphLineWidth: 1
-# Viewer.PointSize:2
-# Viewer.CameraSize: 0.15
-# Viewer.CameraLineWidth: 2
-# Viewer.ViewpointX: 0
-# Viewer.ViewpointY: -10
-# Viewer.ViewpointZ: -0.1
-# Viewer.ViewpointF: 2000
-
-Viewer.KeyFrameSize: 0.6
-Viewer.KeyFrameLineWidth: 2
+Viewer.KeyFrameSize: 0.1
+Viewer.KeyFrameLineWidth: 1
 Viewer.GraphLineWidth: 1
 Viewer.PointSize:2
-Viewer.CameraSize: 0.7
-Viewer.CameraLineWidth: 3
+Viewer.CameraSize: 0.15
+Viewer.CameraLineWidth: 2
 Viewer.ViewpointX: 0
-Viewer.ViewpointY: -100
+Viewer.ViewpointY: -10
 Viewer.ViewpointZ: -0.1
 Viewer.ViewpointF: 2000
+
+# Viewer.KeyFrameSize: 0.6
+# Viewer.KeyFrameLineWidth: 2
+# Viewer.GraphLineWidth: 1
+# Viewer.PointSize:2
+# Viewer.CameraSize: 0.7
+# Viewer.CameraLineWidth: 3
+# Viewer.ViewpointX: 0
+# Viewer.ViewpointY: -100
+# Viewer.ViewpointZ: -0.1
+# Viewer.ViewpointF: 2000
 

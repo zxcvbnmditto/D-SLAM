@@ -13,12 +13,39 @@
 #include <unistd.h>
 
 #include <System.h>
+#include "../include/monodepth2.h"
 
 #define M_HEIGHT 320
 #define M_WIDTH 1024
 
 #define ORINGAL_HEIGHT 376
 #define ORINGAL_WIDTH 1241
+
+#define DEVICE_ID 0
+#define VIDEO_HEIGHT 720
+#define VIDEO_WIDTH 1280
+#define VIDEO_FPS 30
+
+void setupVideoObj(cv::VideoCapture &videoCapture)
+{
+    int apiID = cv::CAP_ANY; // 0 = autodetect default API
+    videoCapture.open(DEVICE_ID + apiID);
+    if (!videoCapture.isOpened())
+    {
+        cerr << "ERROR! Unable to open camera\n";
+        exit(1);
+    }
+    videoCapture.set(cv::VideoCaptureProperties::CAP_PROP_FRAME_WIDTH, VIDEO_WIDTH);
+    videoCapture.set(cv::VideoCaptureProperties::CAP_PROP_FRAME_HEIGHT, VIDEO_HEIGHT);
+    // videoCapture.set(cv::VideoCaptureProperties::CAP_PROP_SAR_NUM, 376.0 / 1241.0);
+    videoCapture.set(cv::VideoCaptureProperties::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
+    videoCapture.set(cv::VideoCaptureProperties::CAP_PROP_FPS, VIDEO_FPS);
+
+    std::cout << "Video FPS: " << videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_FPS) << std::endl
+              << "Video Width: " << videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_WIDTH) << std::endl
+              << "Video Height: " << videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_HEIGHT) << std::endl
+              << "Video Aspect Ratio: " << videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_SAR_NUM) << std::endl;
+}
 
 int main(int argc, const char *argv[])
 {
@@ -36,41 +63,31 @@ int main(int argc, const char *argv[])
         device = torch::kCUDA;
     }
 
-    torch::jit::script::Module encoder_module, decoder_module;
-    try
-    {
-        // Deserialize the ScriptModule from a file using torch::jit::load().
-        encoder_module = torch::jit::load(argv[1]);
-        decoder_module = torch::jit::load(argv[2]);
-        encoder_module.to(device);
-        decoder_module.to(device);
-    }
-    catch (const c10::Error &e)
-    {
-        std::cerr << "error loading the model\n";
-        return -1;
-    }
+    // Monodepth2
+    int batch = 5;
+    Monodepth2 model(argv[1], argv[2], M_WIDTH, M_HEIGHT, VIDEO_WIDTH, VIDEO_HEIGHT, batch);
+    model.loadModel(device);
 
+    // Video Stream
     cv::VideoCapture videoCapture;
-    int deviceID = 0;        // 0 = open default camera
     int apiID = cv::CAP_ANY; // 0 = autodetect default API
-    int fps = 1;
-    videoCapture.open(deviceID + apiID);
+    videoCapture.open(DEVICE_ID + apiID);
     if (!videoCapture.isOpened())
     {
         cerr << "ERROR! Unable to open camera\n";
-        return -1;
+        exit(1);
     }
-    videoCapture.set(cv::VideoCaptureProperties::CAP_PROP_FRAME_WIDTH, 1280.0);
-    videoCapture.set(cv::VideoCaptureProperties::CAP_PROP_FRAME_HEIGHT, 720.0);
+    videoCapture.set(cv::VideoCaptureProperties::CAP_PROP_FRAME_WIDTH, double(VIDEO_WIDTH));
+    videoCapture.set(cv::VideoCaptureProperties::CAP_PROP_FRAME_HEIGHT, double(VIDEO_HEIGHT));
     // videoCapture.set(cv::VideoCaptureProperties::CAP_PROP_SAR_NUM, 376.0 / 1241.0);
     videoCapture.set(cv::VideoCaptureProperties::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
-    videoCapture.set(cv::VideoCaptureProperties::CAP_PROP_FPS, 30);
+    videoCapture.set(cv::VideoCaptureProperties::CAP_PROP_FPS, VIDEO_FPS);
 
     std::cout << "Video FPS: " << videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_FPS) << std::endl
               << "Video Width: " << videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_WIDTH) << std::endl
               << "Video Height: " << videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_HEIGHT) << std::endl
               << "Video Aspect Ratio: " << videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_SAR_NUM) << std::endl;
+    // setupVideoObj(videoCapture);
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM2::System SLAM(argv[3], argv[4], ORB_SLAM2::System::RGBD, true);
@@ -84,87 +101,43 @@ int main(int argc, const char *argv[])
 
         std::vector<cv::Mat> rgb_imgs;
         std::vector<double> t_frames;
-        std::vector<torch::Tensor> inputs_tensor;
-        for (int i = 0; i < fps; i++)
+        while (model.isNotReady())
         {
-            // wait for a new frame from camera and store it into 'frame'
             videoCapture.read(input_img);
-            t_frame = videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_POS_MSEC);
-            // check if we succeeded
             if (input_img.empty())
             {
-                cerr << "ERROR! blank frame grabbed\n";
-                break;
+                std::cout << "ERROR! blank frame grabbed" << std::endl;
+                std::cout << "Empty" << std::endl;
+                continue;
             }
-            // Prepare Time frame
-            vTimestamps.push_back(t_frame);
+            t_frame = videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_POS_MSEC);
 
             // Convert BGR to RGB
             cv::cvtColor(input_img, input_img, cv::COLOR_BGR2RGB);
+            model.addNewImage(input_img);
 
-            // Resize input images
-            cv::Mat resized_img;
-            cv::resize(input_img, resized_img, cv::Size(M_WIDTH, M_HEIGHT), 0, 0, cv::INTER_LANCZOS4);
-            resized_img.convertTo(resized_img, CV_32FC3, 1.0f / 255.0f);
-
-            cv::Mat rgb_img = input_img;
-            rgb_img.convertTo(rgb_img, CV_8UC3);
+            cv::Mat rgb_img = input_img.clone();
+            rgb_img.convertTo(input_img, CV_8UC3);
+            cv::imshow("Input", rgb_img);
             rgb_imgs.push_back(rgb_img);
             t_frames.push_back(t_frame);
-
-            // Convert cv::Mat to tensor type
-            torch::Tensor input_tensor = torch::from_blob(resized_img.data, {1, M_HEIGHT, M_WIDTH, 3});
-            // Transform Tenor Shape to (N, C, W, H)
-            input_tensor = input_tensor.permute({0, 3, 1, 2});
-            inputs_tensor.push_back(input_tensor);
-        }
-        std::vector<torch::jit::IValue> enc_inputs = {torch::cat(inputs_tensor, 0).to(device)};
-
-        // Encoder
-        chrono::steady_clock::time_point enc_1 = chrono::steady_clock::now();
-        auto enc_outputs = encoder_module.forward(enc_inputs).toTuple();
-        chrono::steady_clock::time_point enc_2 = chrono::steady_clock::now();
-
-        // Cast to std::vector<torch::jit::IValue> for decoder input
-        std::vector<torch::jit::IValue> dec_inputs;
-        for (int i = 0; i < 5; i++)
-            dec_inputs.push_back(enc_outputs->elements()[i].toTensor().to(device));
-
-        // Decoder
-        chrono::steady_clock::time_point dec_1 = chrono::steady_clock::now();
-        auto dec_outputs = decoder_module.forward(dec_inputs).toTuple();
-        chrono::steady_clock::time_point dec_2 = chrono::steady_clock::now();
-
-        // Prepare Depth
-        at::Tensor depth_map = (dec_outputs->elements()[3]).toTensor().to(torch::kCPU);
-        std::vector<cv::Mat> depth_imgs;
-        for (int i = 0; i < fps; i++)
-        {
-            cv::Mat depth_img = cv::Mat::ones(ORINGAL_HEIGHT, ORINGAL_WIDTH, CV_32F);
-            at::Tensor depth_tensor = torch::upsample_bilinear2d(at::slice(depth_map, 0, i, i + 1),
-                                                                 std::vector<int64_t>{ORINGAL_HEIGHT, ORINGAL_WIDTH},
-                                                                 false); // Upsampled to orignal img size
-            std::memcpy(depth_img.data, depth_tensor.data_ptr(),
-                        sizeof(float) * depth_tensor.numel());
-            depth_img.convertTo(depth_img, CV_32FC1); // FIXME
-            depth_imgs.push_back(depth_img);
-            cv::imshow("Depth", depth_img);
         }
 
-        // double t_frame = std::stod(vTimestamps[ni]);
+        // Depth Prediction
+        std::vector<cv::Mat> depth_imgs = model.forward(device);
 
-        // // Pass the image to the SLAM system
+        // Pass the image to the SLAM system
         chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
-        for (int i = 0; i < fps; i++)
+        for (unsigned int i = 0; i < rgb_imgs.size(); i++)
         {
+            // cv::imshow("RGB", rgb_imgs[i]);
+            // cv::imshow("Depth", depth_imgs[i]);
             SLAM.TrackRGBD(rgb_imgs[i], depth_imgs[i], t_frames[i]);
         }
         chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
 
         chrono::steady_clock::time_point end_time = chrono::steady_clock::now();
         std::cout << "Timestamp: " << t_frame << std::endl
-                  << "Encoder Time: " << chrono::duration_cast<chrono::duration<double>>(enc_2 - enc_1).count() << std::endl
-                  << "Decoder Time: " << chrono::duration_cast<chrono::duration<double>>(dec_2 - dec_1).count() << std::endl
                   << "Track Time: " << chrono::duration_cast<chrono::duration<double>>(t2 - t1).count() << std::endl
                   << "Iter Time: " << chrono::duration_cast<chrono::duration<double>>(end_time - start_time).count() << std::endl;
     }

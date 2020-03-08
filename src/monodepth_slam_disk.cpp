@@ -109,6 +109,11 @@ int main(int argc, const char *argv[])
     encoder_module.to(device);
     decoder_module.to(device);
 
+    cv::FileStorage fsettings(argv[6], cv::FileStorage::READ);
+    double minDepth = fsettings["minDepth"];
+    double maxDepth = fsettings["maxDepth"];
+    minDepth = 1.0 / minDepth;
+    maxDepth = 1.0 / maxDepth;
     for (int ni = 0; ni < imgs.size(); ni++)
     {
         chrono::steady_clock::time_point start_time = chrono::steady_clock::now();
@@ -160,22 +165,30 @@ int main(int argc, const char *argv[])
         std::memcpy(depth_img.data, depth_tensor.data_ptr(),
                     sizeof(float) * depth_tensor.numel());
         // depth_img.convertTo(depth_img, CV_32F); // FIXME
-        int min = 0.115;
-        int max = 100;
-        min = 1.0 / min;
-        max = 1.0 / max;
-        cv::Mat scale_disp = max + (min - max) * depth_img;
+
+        cv::Mat scale_disp = maxDepth + (minDepth - maxDepth) * depth_img;
         cv::Mat inverse_img = 1.0 / scale_disp;
+        // cv::Mat inverse_img = min / depth_img;
         // cv::absdiff(cv::Mat::ones(ORINGAL_HEIGHT, ORINGAL_WIDTH, CV_32F), depth_img, inverse_img);
-        cv::normalize(inverse_img, inverse_img, 0.9, 0, cv::NormTypes::NORM_MINMAX);
 
+        // if (ni == 0)
+        //     cv::imwrite("1.png", inverse_img);
+
+        // // cv::threshold(inverse_img, inverse_img, 0.9, 1.0, cv::ThresholdTypes::THRESH_TRUNC);
+
+        // cv::normalize(inverse_img, inverse_img, 0.915, 0, cv::NormTypes::NORM_MINMAX);
+        // if (ni == 0)
+        //     cv::imwrite("2.png", inverse_img);
+
+        // // cv::imshow("Depth2", inverse_img);
+        // inverse_img.convertTo(inverse_img, CV_32F);
         // cv::imshow("Depth2", inverse_img);
-        inverse_img.convertTo(inverse_img, CV_32F);
-        cv::imshow("Depth2", inverse_img);
+        // if (ni == 0)
+        //     cv::imwrite("3.png", inverse_img);
 
-        cv::Mat inv_inv_img = inverse_img.clone();
-        cv::absdiff(cv::Mat::ones(ORINGAL_HEIGHT, ORINGAL_WIDTH, CV_32F), inv_inv_img, inv_inv_img);
-        cv::imshow("Depth3", inv_inv_img);
+        // cv::Mat inv_inv_img = inverse_img.clone();
+        // cv::absdiff(cv::Mat::ones(ORINGAL_HEIGHT, ORINGAL_WIDTH, CV_32F), inv_inv_img, inv_inv_img);
+        // cv::imshow("Depth3", inv_inv_img);
 
         // cv::Mat depth_heatmap = depth_img.clone();
         // depth_heatmap.convertTo(depth_heatmap, CV_8UC1, 255.0f);
@@ -196,10 +209,10 @@ int main(int argc, const char *argv[])
         // // cv::normalize(gray_img, gray_img, 255, 0, cv::NormTypes::NORM_MINMAX);
         // cv::imshow("Depth3", gray_img);
 
-        depth_img = inv_inv_img.clone();
-        depth_img.convertTo(depth_img, CV_8U, 255.0);
-        cv::imshow("Depth", depth_img);
-        depth_img.convertTo(depth_img, CV_32F);
+        depth_img = inverse_img.clone();
+        // depth_img.convertTo(depth_img, CV_8U, 510.0);
+        // // cv::imshow("Depth", depth_img);
+        // depth_img.convertTo(depth_img, CV_32F);
 
         // std::cout << "Mtx: " << std::endl
         //           << depth_img << std::endl;
@@ -225,14 +238,14 @@ int main(int argc, const char *argv[])
         vTimesTrack[ni] = ttrack;
 
         // Wait to load the next frame
-        double T = 0;
-        if (ni < nImages - 1)
-            T = std::stod(vTimestamps[ni + 1]) - t_frame;
-        else if (ni > 0)
-            T = t_frame - std::stod(vTimestamps[ni - 1]);
+        // double T = 0;
+        // if (ni < nImages - 1)
+        //     T = std::stod(vTimestamps[ni + 1]) - t_frame;
+        // else if (ni > 0)
+        //     T = t_frame - std::stod(vTimestamps[ni - 1]);
 
-        if (ttrack < T)
-            usleep((T - ttrack) * 1e6);
+        // if (ttrack < T)
+        //     usleep((T - ttrack) * 1e6);
 
         chrono::steady_clock::time_point end_time = chrono::steady_clock::now();
         std::cout << "Input Image: " << in_path + '/' + imgs[ni] << std::endl
@@ -241,7 +254,6 @@ int main(int argc, const char *argv[])
                   << "Track Time: " << std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count() << std::endl
                   << "Iter Time: " << chrono::duration_cast<chrono::duration<double>>(end_time - start_time).count() << std::endl;
     }
-
     SLAM.SaveTrajectoryKITTI("camera_trajectory.txt");
 
     // Stop all threads

@@ -16,12 +16,6 @@
 #include <System.h>
 #include "../include/monodepth2.h"
 
-#define M_HEIGHT 320
-#define M_WIDTH 1024
-
-#define ORINGAL_HEIGHT 376
-#define ORINGAL_WIDTH 1241
-
 bool sort_filename(std::string s1, std::string s2)
 {
     size_t id1 = s1.find_last_of(".");
@@ -77,17 +71,9 @@ int main(int argc, const char *argv[])
 {
     usage(argc);
 
-    torch::Device device = torch::kCPU;
-    if (torch::cuda::is_available())
-    {
-        std::cout << "CUDA is available! Training on GPU." << std::endl;
-        device = torch::kCUDA;
-    }
-
     // Monodepth2
-    unsigned int batch = 5;
-    Monodepth2 model(argv[3], argv[4], M_WIDTH, M_HEIGHT, ORINGAL_WIDTH, ORINGAL_HEIGHT, batch);
-    model.loadModel(device);
+    Monodepth2 model(argv[3], argv[4], argv[6]);
+    model.loadModel();
 
     std::string in_path = argv[1];
     std::string out_path = argv[2];
@@ -104,12 +90,6 @@ int main(int argc, const char *argv[])
     ORB_SLAM2::System SLAM(argv[5], argv[6], ORB_SLAM2::System::RGBD, true);
     // ORB_SLAM2::System SLAM(argv[5], argv[6], ORB_SLAM2::System::MONOCULAR, true);
 
-    // cv::FileStorage fsettings(argv[6], cv::FileStorage::READ);
-    // double minDepth = fsettings["minDepth"];
-    // double maxDepth = fsettings["maxDepth"];
-    // minDepth = 1.0 / minDepth;
-    // maxDepth = 1.0 / maxDepth;
-
     int ni = 0;
     std::vector<cv::Mat> input_imgs;
     std::vector<cv::Mat> rgb_imgs;
@@ -122,15 +102,6 @@ int main(int argc, const char *argv[])
 
         while (model.isNotReady())
         {
-            // videoCapture.read(input_img);
-            // if (input_img.empty())
-            // {
-            //     std::cout << "ERROR! blank frame grabbed" << std::endl;
-            //     std::cout << "Empty" << std::endl;
-            //     continue;
-            // }
-            // t_frame = videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_POS_MSEC);
-
             if (ni == nImages)
                 goto endloop;
             // Load images
@@ -155,15 +126,10 @@ int main(int argc, const char *argv[])
             t_frames.push_back(t_frame);
 
             model.addNewImage(input_imgs.back());
-            // Issue: Cannot place this inside Monodepth2
-            // resized_img = copy_imgs.back();
-            // cv::resize(resized_img, resized_img, cv::Size(M_WIDTH, M_HEIGHT), 0, 0, cv::INTER_LANCZOS4);
-            // resized_img.convertTo(resized_img, CV_32FC3, 1.0f / 255.0f);
-            // resized_img.copyTo(copy_imgs.back());
         }
 
         // Depth Prediction
-        std::vector<cv::Mat> depth_imgs = model.forward(device);
+        std::vector<cv::Mat> depth_imgs = model.forward();
 
         // Pass the image to the SLAM system
         chrono::steady_clock::time_point t1 = chrono::steady_clock::now();

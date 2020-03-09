@@ -33,9 +33,6 @@ ThDepth: 40
 # New
 # Deptmap values factor
 DepthMapFactor: 0.031520201
-
-minDepth: 0.1
-maxDepth: 1000
 #--------------------------------------------------------------------------------------------
 # ORB Parameters
 #--------------------------------------------------------------------------------------------
@@ -81,4 +78,20 @@ Viewer.ViewpointX: 0
 Viewer.ViewpointY: -100
 Viewer.ViewpointZ: -0.1
 Viewer.ViewpointF: 2000
+
+#--------------------------------------------------------------------------------------------
+# Custom Parameters
+#--------------------------------------------------------------------------------------------
+minDepth: 0.1
+maxDepth: 1000
+
+# Monodepth Model width & Height
+mWidth: 1024
+mHeight: 320
+
+# Input Image/Frame Width & Height
+iWidth: 1280
+iHeight: 720
+
+batch: 1
 

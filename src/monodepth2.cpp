@@ -2,22 +2,35 @@
 #include <chrono>
 #include <iostream>
 
-Monodepth2::Monodepth2(std::string encName, std::string decName, int mWidth, int mHeight, int iWidth, int iHeight, unsigned int batch)
+Monodepth2::Monodepth2(std::string encName, std::string decName, std::string settingName)
 {
     this->encName = encName;
     this->decName = decName;
-    this->mWidth = mWidth;
-    this->mHeight = mHeight;
-    this->iWidth = iWidth;
-    this->iHeight = iHeight;
-    this->batch = batch;
+    cv::FileStorage fsettings(settingName, cv::FileStorage::READ);
+    this->minDepth = fsettings["minDepth"];
+    this->maxDepth = fsettings["maxDepth"];
+    this->minDepth = 1.0 / this->minDepth;
+    this->maxDepth = 1.0 / this->maxDepth;
+
+    this->mWidth = fsettings["mWidth"];
+    this->mHeight = fsettings["mHeight"];
+    this->iWidth = fsettings["iWidth"];
+    this->iHeight = fsettings["iHeight"];
+    this->batch = (int)(fsettings["batch"]);
+    this->showDepth = (bool)(int)(fsettings["showDepth"]);
+
+    if (torch::cuda::is_available())
+    {
+        std::cout << "CUDA is available! Training on GPU." << std::endl;
+        this->device = torch::kCUDA;
+    }
 }
 
 Monodepth2::~Monodepth2()
 {
 }
 
-void Monodepth2::loadModel(torch::Device device)
+void Monodepth2::loadModel()
 {
     // Load Modules
     try
@@ -25,8 +38,8 @@ void Monodepth2::loadModel(torch::Device device)
         // Deserialize the ScriptModule from a file using torch::jit::load().
         this->encoder = torch::jit::load(this->encName);
         this->decoder = torch::jit::load(this->decName);
-        this->encoder.to(device);
-        this->decoder.to(device);
+        this->encoder.to(this->device);
+        this->decoder.to(this->device);
     }
     catch (const c10::Error &e)
     {
@@ -37,14 +50,13 @@ void Monodepth2::loadModel(torch::Device device)
 
 bool Monodepth2::isNotReady()
 {
-    // std::cout << "Batch: " << this->inTensor.size() << std::endl;
     return this->inTensor.size() < this->batch;
 }
 
-std::vector<cv::Mat> Monodepth2::forward(torch::Device device)
+std::vector<cv::Mat> Monodepth2::forward()
 {
     // Encoder Input
-    std::vector<torch::jit::IValue> encInputs = {torch::cat(this->inTensor, 0).to(device)};
+    std::vector<torch::jit::IValue> encInputs = {torch::cat(this->inTensor, 0).to(this->device)};
 
     // Encoder Forwarding
     std::chrono::steady_clock::time_point encT1 = std::chrono::steady_clock::now();
@@ -55,7 +67,7 @@ std::vector<cv::Mat> Monodepth2::forward(torch::Device device)
     // Decoder Input
     std::vector<torch::jit::IValue> decInputs;
     for (int i = 0; i < 5; i++)
-        decInputs.push_back(encOutputs->elements()[i].toTensor().to(device));
+        decInputs.push_back(encOutputs->elements()[i].toTensor().to(this->device));
 
     // Decoder Forwarding
     std::chrono::steady_clock::time_point decT1 = std::chrono::steady_clock::now();
@@ -89,15 +101,10 @@ std::vector<cv::Mat> Monodepth2::retrieveDepthImages(at::Tensor depthTensor)
     for (unsigned int i = 0; i < this->batch; i++)
     {
         cv::Mat depthImg = cv::Mat::ones(this->iHeight, this->iWidth, CV_32F);
-        at::Tensor depth = torch::upsample_bilinear2d(at::slice(depthTensor, 0, i, i + 1),
-                                                      std::vector<int64_t>{this->iHeight, this->iWidth},
-                                                      false); // Upsampled to orignal img size
+        torch::Tensor depth = torch::upsample_bilinear2d(at::slice(depthTensor, 0, i, i + 1),
+                                                         std::vector<int64_t>{this->iHeight, this->iWidth},
+                                                         false); // Upsampled to orignal img size
         std::memcpy(depthImg.data, depth.data_ptr(), sizeof(float) * depth.numel());
-
-        double minDepth = 0.1;
-        double maxDepth = 1000.0;
-        minDepth = 1.0 / minDepth;
-        maxDepth = 1.0 / maxDepth;
         cv::Mat scale_disp = maxDepth + (minDepth - maxDepth) * depthImg;
         cv::Mat inverse_img = 1.0 / scale_disp;
 

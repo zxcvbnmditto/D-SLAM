@@ -15,11 +15,6 @@
 #include <System.h>
 #include "../include/monodepth2.h"
 
-#define M_HEIGHT 320
-#define M_WIDTH 1024
-
-#define ORINGAL_HEIGHT 376
-#define ORINGAL_WIDTH 1241
 
 #define DEVICE_ID 0
 #define VIDEO_HEIGHT 720
@@ -55,17 +50,9 @@ int main(int argc, const char *argv[])
         return -1;
     }
 
-    torch::Device device = torch::kCPU;
-    if (torch::cuda::is_available())
-    {
-        std::cout << "CUDA is available! Training on GPU." << std::endl;
-        device = torch::kCUDA;
-    }
-
     // Monodepth2
-    int batch = 5;
-    Monodepth2 model(argv[1], argv[2], M_WIDTH, M_HEIGHT, VIDEO_WIDTH, VIDEO_HEIGHT, batch);
-    model.loadModel(device);
+    Monodepth2 model(argv[1], argv[2], argv[4]);
+    model.loadModel();
 
     // Video Stream
     cv::VideoCapture videoCapture;
@@ -84,6 +71,7 @@ int main(int argc, const char *argv[])
     {
         chrono::steady_clock::time_point start_time = chrono::steady_clock::now();
 
+        chrono::steady_clock::time_point a1 = chrono::steady_clock::now();
         while (model.isNotReady())
         {
             videoCapture.read(input_img);
@@ -113,9 +101,12 @@ int main(int argc, const char *argv[])
 
             model.addNewImage(input_imgs.back());
         }
+        chrono::steady_clock::time_point a2 = chrono::steady_clock::now();
 
+        chrono::steady_clock::time_point b1 = chrono::steady_clock::now();
         // Depth Prediction
-        std::vector<cv::Mat> depth_imgs = model.forward(device);
+        std::vector<cv::Mat> depth_imgs = model.forward();
+        chrono::steady_clock::time_point b2 = chrono::steady_clock::now();
 
         // Pass the image to the SLAM system
         chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
@@ -140,7 +131,9 @@ int main(int argc, const char *argv[])
         rgb_imgs.clear();
         t_frames.clear();
         chrono::steady_clock::time_point end_time = chrono::steady_clock::now();
-        std::cout << "Track Time: " << std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count() << std::endl
+        std::cout << "PreProcess Time: " << std::chrono::duration_cast<std::chrono::duration<double>>(a2 - a1).count() << std::endl
+                  << "Foward Time: " << std::chrono::duration_cast<std::chrono::duration<double>>(b2 - b1).count() << std::endl
+                  << "Track Time: " << std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count() << std::endl
                   << "Iter Time: " << chrono::duration_cast<chrono::duration<double>>(end_time - start_time).count() << std::endl;
     }
 

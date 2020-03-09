@@ -11,12 +11,12 @@
 class Monodepth2
 {
 public:
-    Monodepth2(std::string encName, std::string decName, int mWidth, int mHeight, int iWidth, int iHeight, unsigned int batch);
+    Monodepth2(std::string encName, std::string decName, std::string settingName);
     ~Monodepth2();
 
-    void loadModel(torch::Device device);
+    void loadModel();
     bool isNotReady();
-    std::vector<cv::Mat> forward(torch::Device device);
+    std::vector<cv::Mat> forward();
     void addNewImage(cv::Mat &image);
     void visualiszeDepthImage(cv::Mat depthImg);
 
@@ -34,7 +34,10 @@ private:
     int iWidth;         // Video Image Width
     int iHeight;        // Video Image Height
     unsigned int batch; // Number of images to perform one forwarding
-    bool showDepth = true;
+    bool showDepth;
+    torch::Device device = torch::kCPU;
+    double minDepth;
+    double maxDepth;
 };
 
 #endif // PORT_TTLOGTARGET_H

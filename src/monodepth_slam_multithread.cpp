@@ -18,12 +18,6 @@
 #include <System.h>
 #include "../include/monodepth2.h"
 
-#define M_HEIGHT 320
-#define M_WIDTH 1024
-
-#define ORINGAL_HEIGHT 376
-#define ORINGAL_WIDTH 1241
-
 #define DEVICE_ID 0
 #define VIDEO_HEIGHT 720
 #define VIDEO_WIDTH 1280
@@ -56,7 +50,7 @@ void setupVideoObj(cv::VideoCapture &videoCapture)
               << "Video Aspect Ratio: " << videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_SAR_NUM) << std::endl;
 }
 
-void get_frames(torch::Device &device, cv::VideoCapture &videoCapture, Monodepth2 &model, cv::Mat &input_img, cv::Mat &rgb_img, double &t_frame, std::vector<cv::Mat> &input_imgs, std::vector<cv::Mat> &rgb_imgs, std::vector<double> &t_frames)
+void get_frames(cv::VideoCapture &videoCapture, Monodepth2 &model, cv::Mat &input_img, cv::Mat &rgb_img, double &t_frame, std::vector<cv::Mat> &input_imgs, std::vector<cv::Mat> &rgb_imgs, std::vector<double> &t_frames)
 {
     std::lock_guard<std::mutex> guard(lock_mutex);
     std::cout << "Thread1" << std::endl;
@@ -96,7 +90,7 @@ void get_frames(torch::Device &device, cv::VideoCapture &videoCapture, Monodepth
     cond_var1.notify_one();
 }
 
-void get_depth(torch::Device &device, Monodepth2 &model, std::vector<cv::Mat> &depth_imgs)
+void get_depth(Monodepth2 &model, std::vector<cv::Mat> &depth_imgs)
 {
     // lock_mutex.lock();
     std::unique_lock<std::mutex> uLock(lock_mutex);
@@ -104,7 +98,7 @@ void get_depth(torch::Device &device, Monodepth2 &model, std::vector<cv::Mat> &d
     while (!data_ready)
         cond_var1.wait(uLock);
     std::cout << "Thread2" << std::endl;
-    depth_imgs = model.forward(device);
+    depth_imgs = model.forward();
     depth_ready = true;
     data_ready = false;
     cond_var2.notify_one();
@@ -136,17 +130,9 @@ int main(int argc, const char *argv[])
         return -1;
     }
 
-    torch::Device device = torch::kCPU;
-    if (torch::cuda::is_available())
-    {
-        std::cout << "CUDA is available! Training on GPU." << std::endl;
-        device = torch::kCUDA;
-    }
-
     // Monodepth2
-    int batch = 5;
-    Monodepth2 model(argv[1], argv[2], M_WIDTH, M_HEIGHT, VIDEO_WIDTH, VIDEO_HEIGHT, batch);
-    model.loadModel(device);
+    Monodepth2 model(argv[1], argv[2], argv[4]);
+    model.loadModel();
 
     // Video Stream
     cv::VideoCapture videoCapture;
@@ -166,11 +152,11 @@ int main(int argc, const char *argv[])
         chrono::steady_clock::time_point start_time = chrono::steady_clock::now();
 
         // Thread 1: fetches frames
-        std::thread th1(get_frames, std::ref(device), std::ref(videoCapture), std::ref(model), std::ref(input_img), std::ref(rgb_img), std::ref(t_frame), std::ref(input_imgs), std::ref(rgb_imgs), std::ref(t_frames));
+        std::thread th1(get_frames, std::ref(videoCapture), std::ref(model), std::ref(input_img), std::ref(rgb_img), std::ref(t_frame), std::ref(input_imgs), std::ref(rgb_imgs), std::ref(t_frames));
 
         // Thread 2: Depth Prediction
         std::vector<cv::Mat> depth_imgs;
-        std::thread th2(get_depth, std::ref(device), std::ref(model), std::ref(depth_imgs));
+        std::thread th2(get_depth, std::ref(model), std::ref(depth_imgs));
 
         // Pass the image to the SLAM system
         // Thread 3: Perform RGBD SLAM

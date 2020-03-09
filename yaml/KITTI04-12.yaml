@@ -90,8 +90,18 @@ mWidth: 1024
 mHeight: 320
 
 # Input Image/Frame Width & Height
-iWidth: 1280
-iHeight: 720
+iWidth: 1226 # 1226
+iHeight: 370  # 370
 
-batch: 1
+batch: 5
 
+# Visualize Depth = 1, Not = 0
+showDepth: 1
+
+# Webcam
+deviceId: 0
+vCapAPI: 0 # 0 (Auto-Detect), 200 (V4L2)
+vWidth: 1280
+vHeight: 720
+vfps: 30
+v4cc: "MJPG"

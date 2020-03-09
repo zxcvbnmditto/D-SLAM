@@ -8,20 +8,22 @@
 #include <opencv2/videoio.hpp>
 #include <opencv2/highgui.hpp>
 
+#include "monoslamData.h"
+
 class Monodepth2
 {
 public:
-    Monodepth2(std::string encName, std::string decName, std::string settingName);
+    Monodepth2(std::string encName, std::string decName, std::string settingName, const std::shared_ptr<MonoslamData> &data);
     ~Monodepth2();
 
     void loadModel();
     bool isNotReady();
-    std::vector<cv::Mat> forward();
+    void forward();
     void addNewImage(cv::Mat &image);
     void visualiszeDepthImage(cv::Mat depthImg);
 
 protected:
-    std::vector<cv::Mat> retrieveDepthImages(at::Tensor depthTensor);
+    void retrieveDepthImages(at::Tensor depthTensor);
 
 private:
     std::string encName;
@@ -38,6 +40,7 @@ private:
     torch::Device device = torch::kCPU;
     double minDepth;
     double maxDepth;
+    std::shared_ptr<MonoslamData> data;
 };
 
 #endif // PORT_TTLOGTARGET_H

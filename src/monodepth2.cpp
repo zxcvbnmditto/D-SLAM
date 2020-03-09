@@ -1,8 +1,9 @@
-#include "../include/monodepth2.h"
 #include <chrono>
 #include <iostream>
 
-Monodepth2::Monodepth2(std::string encName, std::string decName, std::string settingName)
+#include "../include/monodepth2.h"
+
+Monodepth2::Monodepth2(std::string encName, std::string decName, std::string settingName, const std::shared_ptr<MonoslamData> &data)
 {
     this->encName = encName;
     this->decName = decName;
@@ -18,6 +19,7 @@ Monodepth2::Monodepth2(std::string encName, std::string decName, std::string set
     this->iHeight = fsettings["iHeight"];
     this->batch = (int)(fsettings["batch"]);
     this->showDepth = (bool)(int)(fsettings["showDepth"]);
+    this->data = data;
 
     if (torch::cuda::is_available())
     {
@@ -53,7 +55,7 @@ bool Monodepth2::isNotReady()
     return this->inTensor.size() < this->batch;
 }
 
-std::vector<cv::Mat> Monodepth2::forward()
+void Monodepth2::forward()
 {
     // Encoder Input
     std::vector<torch::jit::IValue> encInputs = {torch::cat(this->inTensor, 0).to(this->device)};
@@ -80,7 +82,7 @@ std::vector<cv::Mat> Monodepth2::forward()
 
     // Use the most fine-grained prediction
     at::Tensor depthTensor = (decOutputs->elements()[3]).toTensor().to(torch::kCPU);
-    return retrieveDepthImages(depthTensor);
+    retrieveDepthImages(depthTensor);
 }
 
 void Monodepth2::addNewImage(cv::Mat &newImg)
@@ -95,9 +97,9 @@ void Monodepth2::addNewImage(cv::Mat &newImg)
     this->inTensor.push_back(imgTensor);
 }
 
-std::vector<cv::Mat> Monodepth2::retrieveDepthImages(at::Tensor depthTensor)
+void Monodepth2::retrieveDepthImages(at::Tensor depthTensor)
 {
-    std::vector<cv::Mat> depthImgs;
+    // std::vector<cv::Mat> depthImgs;
     for (unsigned int i = 0; i < this->batch; i++)
     {
         cv::Mat depthImg = cv::Mat::ones(this->iHeight, this->iWidth, CV_32F);
@@ -108,11 +110,12 @@ std::vector<cv::Mat> Monodepth2::retrieveDepthImages(at::Tensor depthTensor)
         cv::Mat scale_disp = maxDepth + (minDepth - maxDepth) * depthImg;
         cv::Mat inverse_img = 1.0 / scale_disp;
 
-        depthImgs.push_back(inverse_img);
+        // depthImgs.push_back(inverse_img);
+        this->data->set(inverse_img, MonoslamDataType::DEPTH);
         visualiszeDepthImage(inverse_img);
     }
 
-    return depthImgs;
+    // return depthImgs;
 }
 
 void Monodepth2::visualiszeDepthImage(cv::Mat depthImg)

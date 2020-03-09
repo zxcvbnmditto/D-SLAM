@@ -7,6 +7,7 @@
 #include <System.h>
 #include "../include/monodepth2.h"
 #include "../include/utils.h"
+#include "../include/monoslamData.h"
 
 void usage(int argc)
 {
@@ -21,8 +22,10 @@ int main(int argc, const char *argv[])
 {
     usage(argc);
 
+    std::shared_ptr<MonoslamData> data = std::make_shared<MonoslamData>();
+
     // Monodepth2
-    Monodepth2 model(argv[3], argv[4], argv[6]);
+    Monodepth2 model(argv[3], argv[4], argv[6], data);
     model.loadModel();
 
     std::string in_path = argv[1];
@@ -41,11 +44,8 @@ int main(int argc, const char *argv[])
     // ORB_SLAM2::System SLAM(argv[5], argv[6], ORB_SLAM2::System::MONOCULAR, true);
 
     int ni = 0;
-    std::vector<cv::Mat> input_imgs;
-    std::vector<cv::Mat> rgb_imgs;
-    std::vector<double> t_frames;
-    cv::Mat rgb_img;
     cv::Mat input_img;
+    double t_frame;
     for (;;)
     {
         chrono::steady_clock::time_point start_time = chrono::steady_clock::now();
@@ -56,38 +56,27 @@ int main(int argc, const char *argv[])
                 goto endloop;
             // Load images
             input_img = cv::imread(in_path + '/' + imgs[ni]);
-            double t_frame = std::stod(vTimestamps[ni]);
+            t_frame = std::stod(vTimestamps[ni]);
             ni += 1;
             if (input_img.data == NULL)
                 continue;
 
-            // Convert BGR to RGB
-            cv::cvtColor(input_img, input_img, cv::COLOR_BGR2RGB);
-
-            // Extend Life Time of input_img
-            input_imgs.push_back(input_img);
-            input_img.copyTo(input_imgs.back());
-
-            // Deep copy images
-            rgb_img = input_imgs.back();
-            rgb_img.convertTo(rgb_img, CV_8UC3);
-            rgb_imgs.push_back(rgb_img);
-            rgb_img.copyTo(rgb_imgs.back());
-            t_frames.push_back(t_frame);
-
-            model.addNewImage(input_imgs.back());
+            data->set(input_img, MonoslamDataType::INPUT);
+            data->set(input_img, MonoslamDataType::BGR);
+            data->set(t_frame);
+            model.addNewImage(input_img);
         }
 
         // Depth Prediction
-        std::vector<cv::Mat> depth_imgs = model.forward();
+        model.forward();
 
         // Pass the image to the SLAM system
         chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
-        for (unsigned int i = 0; i < rgb_imgs.size(); i++)
+        for (int i = 0; i < data->get_length(); i++)
         {
-            // cv::imshow("RGB", rgb_imgs[i]);
-            // cv::imshow("Depth", depth_imgs[i]);
-            SLAM.TrackRGBD(rgb_imgs[i], depth_imgs[i], t_frames[i]);
+            SLAM.TrackRGBD(data->get(i, MonoslamDataType::BGR),   // BGR Img
+                           data->get(i, MonoslamDataType::DEPTH), // Depth Img
+                           data->get(i));                         // Timestamp
         }
         chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
 
@@ -100,9 +89,8 @@ int main(int argc, const char *argv[])
 
         // if (ttrack < T)
         //     usleep((T - ttrack) * 1e6);
-        input_imgs.clear();
-        rgb_imgs.clear();
-        t_frames.clear();
+
+        data->reset();
         chrono::steady_clock::time_point end_time = chrono::steady_clock::now();
         std::cout << "Input Image: " << in_path + '/' + imgs[ni] << std::endl
                   << "Track Time: " << std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count() << std::endl

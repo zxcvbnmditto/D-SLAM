@@ -22,8 +22,8 @@
 #define ORINGAL_WIDTH 1241
 
 #define DEVICE_ID 0
-#define VIDEO_HEIGHT 1080
-#define VIDEO_WIDTH 1920
+#define VIDEO_HEIGHT 720
+#define VIDEO_WIDTH 1280
 #define VIDEO_FPS 30
 
 void setupVideoObj(cv::VideoCapture &videoCapture)
@@ -63,7 +63,7 @@ int main(int argc, const char *argv[])
     }
 
     // Monodepth2
-    int batch = 1;
+    int batch = 5;
     Monodepth2 model(argv[1], argv[2], M_WIDTH, M_HEIGHT, VIDEO_WIDTH, VIDEO_HEIGHT, batch);
     model.loadModel(device);
 
@@ -78,7 +78,6 @@ int main(int argc, const char *argv[])
     std::vector<cv::Mat> rgb_imgs;
     std::vector<double> t_frames;
     double t_frame;
-    cv::Mat resized_img;
     cv::Mat rgb_img;
     cv::Mat input_img;
     for (;;)

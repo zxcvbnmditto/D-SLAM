@@ -113,9 +113,7 @@ int main(int argc, const char *argv[])
     int ni = 0;
     std::vector<cv::Mat> input_imgs;
     std::vector<cv::Mat> rgb_imgs;
-
     std::vector<double> t_frames;
-    cv::Mat resized_img;
     cv::Mat rgb_img;
     cv::Mat input_img;
     for (;;)

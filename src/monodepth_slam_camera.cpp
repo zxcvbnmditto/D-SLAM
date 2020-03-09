@@ -14,41 +14,20 @@
 
 #include <System.h>
 #include "../include/monodepth2.h"
+#include "../include/utils.h"
 
-
-#define DEVICE_ID 0
-#define VIDEO_HEIGHT 720
-#define VIDEO_WIDTH 1280
-#define VIDEO_FPS 30
-
-void setupVideoObj(cv::VideoCapture &videoCapture)
+void usage(int argc)
 {
-    int apiID = cv::CAP_ANY; // 0 = autodetect default API
-    videoCapture.open(DEVICE_ID + apiID);
-    if (!videoCapture.isOpened())
+    if (argc != 5)
     {
-        cerr << "ERROR! Unable to open camera\n";
-        exit(1);
+        std::cerr << "usage: VSLAM <path-to-exported-encoder-script-module> <path-to-exported-decoder-script-module> <path-to-voc-file>  <path-to-string-settings>\n";
+        exit(-1);
     }
-    videoCapture.set(cv::VideoCaptureProperties::CAP_PROP_FRAME_WIDTH, VIDEO_WIDTH);
-    videoCapture.set(cv::VideoCaptureProperties::CAP_PROP_FRAME_HEIGHT, VIDEO_HEIGHT);
-    videoCapture.set(cv::VideoCaptureProperties::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
-    videoCapture.set(cv::VideoCaptureProperties::CAP_PROP_FPS, VIDEO_FPS);
-
-    std::cout << "Video FPS: " << videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_FPS) << std::endl
-              << "Video Width: " << videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_WIDTH) << std::endl
-              << "Video Height: " << videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_FRAME_HEIGHT) << std::endl
-              << "Video Aspect Ratio: " << videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_SAR_NUM) << std::endl;
 }
 
 int main(int argc, const char *argv[])
 {
-
-    if (argc != 5)
-    {
-        std::cerr << "usage: VSLAM <path-to-exported-encoder-script-module> <path-to-exported-decoder-script-module> <path-to-voc-file>  <path-to-string-settings>\n";
-        return -1;
-    }
+    usage(argc);
 
     // Monodepth2
     Monodepth2 model(argv[1], argv[2], argv[4]);
@@ -56,17 +35,17 @@ int main(int argc, const char *argv[])
 
     // Video Stream
     cv::VideoCapture videoCapture;
-    setupVideoObj(videoCapture);
+    setupVideoObj(videoCapture, argv[4]);
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM2::System SLAM(argv[3], argv[4], ORB_SLAM2::System::RGBD, true);
 
-    std::vector<cv::Mat> input_imgs;
-    std::vector<cv::Mat> rgb_imgs;
-    std::vector<double> t_frames;
-    double t_frame;
-    cv::Mat rgb_img;
+    std::vector<cv::Mat> input_imgs; // Extend Lifetime
+    std::vector<cv::Mat> rgb_imgs;   // For SLAM
+    std::vector<double> t_frames;    // For SLAM
     cv::Mat input_img;
+    cv::Mat rgb_img;
+    double t_frame;
     for (;;)
     {
         chrono::steady_clock::time_point start_time = chrono::steady_clock::now();
@@ -77,7 +56,6 @@ int main(int argc, const char *argv[])
             videoCapture.read(input_img);
             if (input_img.empty())
             {
-                setupVideoObj(videoCapture);
                 std::cout << "ERROR! blank frame grabbed" << std::endl;
                 std::cout << "Empty" << std::endl;
                 continue;

@@ -15,48 +15,7 @@
 
 #include <System.h>
 #include "../include/monodepth2.h"
-
-bool sort_filename(std::string s1, std::string s2)
-{
-    size_t id1 = s1.find_last_of(".");
-    size_t id2 = s2.find_last_of(".");
-    return std::stod(s1.substr(0, id1)) < std::stod(s2.substr(0, id2));
-}
-
-bool sort_timestamp(std::string s1, std::string s2)
-{
-    return std::stod(s1) < std::stod(s2);
-}
-
-std::vector<std::vector<std::string>> retrieve_kitti_data(const char *path)
-{
-    struct dirent *entry;
-    DIR *dir = opendir(path);
-
-    if (dir == NULL)
-    {
-        exit(-1);
-    }
-
-    std::vector<std::string> imgs, timestamps;
-    while ((entry = readdir(dir)) != NULL)
-    {
-        std::string filename = entry->d_name;
-        std::string timestamp = entry->d_name;
-
-        if (filename == ".." or filename == ".")
-            continue;
-
-        imgs.push_back(entry->d_name);
-        size_t lastindex = timestamp.find_last_of(".");
-        timestamps.push_back(timestamp.substr(0, lastindex));
-    }
-    closedir(dir);
-    std::sort(imgs.begin(), imgs.end(), sort_filename);
-    std::sort(timestamps.begin(), timestamps.end(), sort_timestamp);
-
-    return {imgs, timestamps};
-}
+#include "../include/utils.h"
 
 void usage(int argc)
 {
@@ -77,7 +36,7 @@ int main(int argc, const char *argv[])
 
     std::string in_path = argv[1];
     std::string out_path = argv[2];
-    auto result = retrieve_kitti_data(argv[1]);
+    auto result = readKittiDisk(argv[1]);
     auto imgs = result[0];
     auto vTimestamps = result[1];
     int nImages = imgs.size();

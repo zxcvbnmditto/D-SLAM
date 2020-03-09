@@ -76,7 +76,6 @@ void Monodepth2::addNewImage(cv::Mat &newImg)
     cv::Size mSize(this->mWidth, this->mHeight);
     cv::resize(newImg, newImg, mSize, 0, 0, cv::INTER_LANCZOS4);
     newImg.convertTo(newImg, CV_32FC3, 1.0f / 255.0f);
-    cv::imshow("Resized", newImg);
 
     // Convert cv::Mat to tensor
     torch::Tensor imgTensor = torch::from_blob(newImg.data, {1, this->mHeight, this->mWidth, 3});

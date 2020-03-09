@@ -104,26 +104,11 @@ int main(int argc, const char *argv[])
     ORB_SLAM2::System SLAM(argv[5], argv[6], ORB_SLAM2::System::RGBD, true);
     // ORB_SLAM2::System SLAM(argv[5], argv[6], ORB_SLAM2::System::MONOCULAR, true);
 
-    torch::jit::script::Module encoder_module, decoder_module;
-    try
-    {
-        // Deserialize the ScriptModule from a file using torch::jit::load().
-        encoder_module = torch::jit::load(argv[3]);
-        decoder_module = torch::jit::load(argv[4]);
-    }
-    catch (const c10::Error &e)
-    {
-        std::cerr << "error loading the model\n";
-        return -1;
-    }
-    encoder_module.to(device);
-    decoder_module.to(device);
-
-    cv::FileStorage fsettings(argv[6], cv::FileStorage::READ);
-    double minDepth = fsettings["minDepth"];
-    double maxDepth = fsettings["maxDepth"];
-    minDepth = 1.0 / minDepth;
-    maxDepth = 1.0 / maxDepth;
+    // cv::FileStorage fsettings(argv[6], cv::FileStorage::READ);
+    // double minDepth = fsettings["minDepth"];
+    // double maxDepth = fsettings["maxDepth"];
+    // minDepth = 1.0 / minDepth;
+    // maxDepth = 1.0 / maxDepth;
 
     int ni = 0;
     std::vector<cv::Mat> input_imgs;

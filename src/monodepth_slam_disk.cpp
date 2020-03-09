@@ -1,14 +1,5 @@
-#include <torch/torch.h>  // One-stop header.
-#include <torch/script.h> // One-stop header.
-#include <opencv2/opencv.hpp>
-#include <opencv2/core.hpp>
-#include <opencv2/videoio.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
 #include <iostream>
 #include <memory>
-#include <stdio.h>
-#include <dirent.h>
 #include <sys/types.h>
 #include <chrono>
 #include <unistd.h>

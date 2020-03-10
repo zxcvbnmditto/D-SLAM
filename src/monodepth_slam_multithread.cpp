@@ -69,8 +69,6 @@ void run_slam(ORB_SLAM2::System &SLAM, std::shared_ptr<MonoslamData> &data)
         cond_var2.wait(uLock);
     std::cout << "Thread3" << std::endl;
     chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
-    // for (unsigned int i = 0; i < rgb_imgs.size(); i++)
-    //     SLAM.TrackRGBD(rgb_imgs[i], depth_imgs[i], t_frames[i]);
     for (int i = 0; i < data->get_length(); i++)
     {
         SLAM.TrackRGBD(data->get(i, MonoslamDataType::BGR),   // BGR Img

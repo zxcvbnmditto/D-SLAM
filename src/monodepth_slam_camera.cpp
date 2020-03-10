@@ -57,21 +57,6 @@ int main(int argc, const char *argv[])
             data->set(input_img, MonoslamDataType::BGR);
             data->set(t_frame);
             model.addNewImage(input_img);
-            // // Convert BGR to RGB
-            // cv::cvtColor(input_img, input_img, cv::COLOR_BGR2RGB);
-
-            // // Extend Life Time of input_img
-            // input_imgs.push_back(input_img);
-            // input_img.copyTo(input_imgs.back());
-
-            // // Deep copy images
-            // rgb_img = input_imgs.back();
-            // rgb_img.convertTo(rgb_img, CV_8UC3);
-            // rgb_imgs.push_back(rgb_img);
-            // rgb_img.copyTo(rgb_imgs.back());
-            // t_frames.push_back(t_frame);
-
-            // model.addNewImage(input_imgs.back());
         }
         chrono::steady_clock::time_point a2 = chrono::steady_clock::now();
 
@@ -90,18 +75,6 @@ int main(int argc, const char *argv[])
         }
         chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
 
-        // // Wait to load the next frame
-        // double T = 0;
-        // if (ni < nImages - 1)
-        //     T = std::stod(vTimestamps[ni + 1]) - t_frame;
-        // else if (ni > 0)
-        //     T = t_frame - std::stod(vTimestamps[ni - 1]);
-
-        // if (ttrack < T)
-        //     usleep((T - ttrack) * 1e6);
-        // input_imgs.clear();
-        // rgb_imgs.clear();
-        // t_frames.clear();
         data->reset();
         chrono::steady_clock::time_point end_time = chrono::steady_clock::now();
         std::cout << "PreProcess Time: " << std::chrono::duration_cast<std::chrono::duration<double>>(a2 - a1).count() << std::endl

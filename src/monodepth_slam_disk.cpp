@@ -35,13 +35,8 @@ int main(int argc, const char *argv[])
     auto vTimestamps = result[1];
     int nImages = imgs.size();
 
-    // Vector for tracking time statistics
-    vector<float> vTimesTrack;
-    vTimesTrack.resize(nImages);
-
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM2::System SLAM(argv[5], argv[6], ORB_SLAM2::System::RGBD, true);
-    // ORB_SLAM2::System SLAM(argv[5], argv[6], ORB_SLAM2::System::MONOCULAR, true);
 
     int ni = 0;
     cv::Mat input_img;
@@ -61,7 +56,6 @@ int main(int argc, const char *argv[])
             if (input_img.data == NULL)
                 continue;
 
-            data->set(input_img, MonoslamDataType::INPUT);
             data->set(input_img, MonoslamDataType::BGR);
             data->set(t_frame);
             model.addNewImage(input_img);
@@ -80,20 +74,9 @@ int main(int argc, const char *argv[])
         }
         chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
 
-        // // Wait to load the next frame
-        // double T = 0;
-        // if (ni < nImages - 1)
-        //     T = std::stod(vTimestamps[ni + 1]) - t_frame;
-        // else if (ni > 0)
-        //     T = t_frame - std::stod(vTimestamps[ni - 1]);
-
-        // if (ttrack < T)
-        //     usleep((T - ttrack) * 1e6);
-
         data->reset();
         chrono::steady_clock::time_point end_time = chrono::steady_clock::now();
-        std::cout << "Input Image: " << in_path + '/' + imgs[ni] << std::endl
-                  << "Track Time: " << std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count() << std::endl
+        std::cout << "Track Time: " << std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count() << std::endl
                   << "Iter Time: " << chrono::duration_cast<chrono::duration<double>>(end_time - start_time).count() << std::endl;
     }
 

@@ -52,13 +52,22 @@ void Monodepth2::loadModel()
 
 bool Monodepth2::isNotReady()
 {
-    return this->inTensor.size() < this->batch;
+    return this->resizedImgs.size() < this->batch;
 }
 
 void Monodepth2::forward()
 {
+    // Prepare Tensors
+    std::vector<torch::Tensor> inTensors;
+    for (unsigned int i = 0; i < this->resizedImgs.size(); i++)
+    {
+        torch::Tensor imgTensor = torch::from_blob(this->resizedImgs[i].data, {1, this->mHeight, this->mWidth, 3});
+        imgTensor = imgTensor.permute({0, 3, 1, 2}); // Transform Tenor Shape to (N, C, W, H)
+        inTensors.push_back(imgTensor);
+    }
+
     // Encoder Input
-    std::vector<torch::jit::IValue> encInputs = {torch::cat(this->inTensor, 0).to(this->device)};
+    std::vector<torch::jit::IValue> encInputs = {torch::cat(inTensors, 0).to(this->device)};
 
     // Encoder Forwarding
     std::chrono::steady_clock::time_point encT1 = std::chrono::steady_clock::now();
@@ -78,28 +87,24 @@ void Monodepth2::forward()
     std::cout << "Decoder Time: " << std::chrono::duration_cast<std::chrono::duration<double>>(decT2 - decT1).count() << std::endl;
 
     // Reset
-    this->inTensor.clear();
+    this->resizedImgs.clear();
 
     // Use the most fine-grained prediction
     at::Tensor depthTensor = (decOutputs->elements()[3]).toTensor().to(torch::kCPU);
     retrieveDepthImages(depthTensor);
 }
 
-void Monodepth2::addNewImage(cv::Mat &newImg)
+void Monodepth2::addNewImage(cv::Mat newImg)
 {
+    cv::Mat resizedImg = newImg.clone();
     cv::Size mSize(this->mWidth, this->mHeight);
-    cv::resize(newImg, newImg, mSize, 0, 0, cv::INTER_LANCZOS4);
-    newImg.convertTo(newImg, CV_32FC3, 1.0f / 255.0f);
-
-    // Convert cv::Mat to tensor
-    torch::Tensor imgTensor = torch::from_blob(newImg.data, {1, this->mHeight, this->mWidth, 3});
-    imgTensor = imgTensor.permute({0, 3, 1, 2}); // Transform Tenor Shape to (N, C, W, H)
-    this->inTensor.push_back(imgTensor);
+    cv::resize(resizedImg, resizedImg, mSize, 0, 0, cv::INTER_LANCZOS4);
+    resizedImg.convertTo(resizedImg, CV_32FC3, 1.0f / 255.0f);
+    this->resizedImgs.push_back(resizedImg);
 }
 
 void Monodepth2::retrieveDepthImages(at::Tensor depthTensor)
 {
-    // std::vector<cv::Mat> depthImgs;
     for (unsigned int i = 0; i < this->batch; i++)
     {
         cv::Mat depthImg = cv::Mat::ones(this->iHeight, this->iWidth, CV_32F);
@@ -110,12 +115,9 @@ void Monodepth2::retrieveDepthImages(at::Tensor depthTensor)
         cv::Mat scale_disp = maxDepth + (minDepth - maxDepth) * depthImg;
         cv::Mat inverse_img = 1.0 / scale_disp;
 
-        // depthImgs.push_back(inverse_img);
         this->data->set(inverse_img, MonoslamDataType::DEPTH);
         visualiszeDepthImage(inverse_img);
     }
-
-    // return depthImgs;
 }
 
 void Monodepth2::visualiszeDepthImage(cv::Mat depthImg)

@@ -12,10 +12,6 @@ void MonoslamData::set(cv::Mat img, MonoslamDataType type)
 {
     switch (type)
     {
-    case MonoslamDataType::INPUT:
-        this->inputImgs.push_back(img);
-        img.copyTo(this->inputImgs.back());
-        break;
     case MonoslamDataType::BGR:
         img.convertTo(img, CV_8UC3);
         this->bgrImgs.push_back(img);
@@ -40,9 +36,6 @@ cv::Mat MonoslamData::get(int id, MonoslamDataType type)
 {
     switch (type)
     {
-    case MonoslamDataType::INPUT:
-        return (id == -1) ? this->inputImgs.back() : this->inputImgs[id];
-        break;
     case MonoslamDataType::BGR:
         return (id == -1) ? this->bgrImgs.back() : this->bgrImgs[id];
         break;
@@ -62,7 +55,7 @@ double MonoslamData::get(int id)
 
 int MonoslamData::get_length()
 {
-    return (int)(this->inputImgs.size());
+    return (int)(this->timestamps.size());
 }
 
 void MonoslamData::reset()
@@ -70,5 +63,4 @@ void MonoslamData::reset()
     this->timestamps.clear();
     this->depthImgs.clear();
     this->bgrImgs.clear();
-    this->inputImgs.clear();
 }

@@ -19,7 +19,7 @@ public:
     void loadModel();
     bool isNotReady();
     void forward();
-    void addNewImage(cv::Mat &image);
+    void addNewImage(cv::Mat image);
     void visualiszeDepthImage(cv::Mat depthImg);
 
 protected:
@@ -30,7 +30,7 @@ private:
     std::string decName;
     torch::jit::script::Module encoder;
     torch::jit::script::Module decoder;
-    std::vector<torch::Tensor> inTensor;
+    std::vector<cv::Mat> resizedImgs;
     int mWidth;         // Model Width
     int mHeight;        // Model Width
     int iWidth;         // Video Image Width

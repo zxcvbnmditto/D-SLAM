@@ -10,7 +10,7 @@
 
 enum MonoslamDataType
 {
-    INPUT,
+    // INPUT,
     BGR,
     DEPTH
 };
@@ -29,7 +29,6 @@ public:
     void reset();
 
 private:
-    std::vector<cv::Mat> inputImgs;
     std::vector<cv::Mat> bgrImgs;
     std::vector<cv::Mat> depthImgs;
     std::vector<double> timestamps;

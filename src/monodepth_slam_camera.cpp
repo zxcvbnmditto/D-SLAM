@@ -7,6 +7,7 @@
 #include <System.h>
 #include "../include/monodepth2.h"
 #include "../include/utils.h"
+#include "../include/monoslamData.h"
 
 void usage(int argc)
 {
@@ -21,8 +22,10 @@ int main(int argc, const char *argv[])
 {
     usage(argc);
 
+    std::shared_ptr<MonoslamData> data = std::make_shared<MonoslamData>();
+
     // Monodepth2
-    Monodepth2 model(argv[1], argv[2], argv[4]);
+    Monodepth2 model(argv[1], argv[2], argv[4], data);
     model.loadModel();
 
     // Video Stream
@@ -32,11 +35,7 @@ int main(int argc, const char *argv[])
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ORB_SLAM2::System SLAM(argv[3], argv[4], ORB_SLAM2::System::RGBD, true);
 
-    std::vector<cv::Mat> input_imgs; // Extend Lifetime
-    std::vector<cv::Mat> rgb_imgs;   // For SLAM
-    std::vector<double> t_frames;    // For SLAM
     cv::Mat input_img;
-    cv::Mat rgb_img;
     double t_frame;
     for (;;)
     {
@@ -55,36 +54,39 @@ int main(int argc, const char *argv[])
             t_frame = videoCapture.get(cv::VideoCaptureProperties::CAP_PROP_POS_MSEC);
             cv::imshow("Input", input_img);
 
-            // Convert BGR to RGB
-            cv::cvtColor(input_img, input_img, cv::COLOR_BGR2RGB);
+            data->set(input_img, MonoslamDataType::BGR);
+            data->set(t_frame);
+            model.addNewImage(input_img);
+            // // Convert BGR to RGB
+            // cv::cvtColor(input_img, input_img, cv::COLOR_BGR2RGB);
 
-            // Extend Life Time of input_img
-            input_imgs.push_back(input_img);
-            input_img.copyTo(input_imgs.back());
+            // // Extend Life Time of input_img
+            // input_imgs.push_back(input_img);
+            // input_img.copyTo(input_imgs.back());
 
-            // Deep copy images
-            rgb_img = input_imgs.back();
-            rgb_img.convertTo(rgb_img, CV_8UC3);
-            rgb_imgs.push_back(rgb_img);
-            rgb_img.copyTo(rgb_imgs.back());
-            t_frames.push_back(t_frame);
+            // // Deep copy images
+            // rgb_img = input_imgs.back();
+            // rgb_img.convertTo(rgb_img, CV_8UC3);
+            // rgb_imgs.push_back(rgb_img);
+            // rgb_img.copyTo(rgb_imgs.back());
+            // t_frames.push_back(t_frame);
 
-            model.addNewImage(input_imgs.back());
+            // model.addNewImage(input_imgs.back());
         }
         chrono::steady_clock::time_point a2 = chrono::steady_clock::now();
 
         chrono::steady_clock::time_point b1 = chrono::steady_clock::now();
         // Depth Prediction
-        std::vector<cv::Mat> depth_imgs = model.forward();
+        model.forward();
         chrono::steady_clock::time_point b2 = chrono::steady_clock::now();
 
         // Pass the image to the SLAM system
         chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
-        for (unsigned int i = 0; i < rgb_imgs.size(); i++)
+        for (int i = 0; i < data->get_length(); i++)
         {
-            // cv::imshow("RGB", rgb_imgs[i]);
-            // cv::imshow("Depth", depth_imgs[i]);
-            SLAM.TrackRGBD(rgb_imgs[i], depth_imgs[i], t_frames[i]);
+            SLAM.TrackRGBD(data->get(i, MonoslamDataType::BGR),   // BGR Img
+                           data->get(i, MonoslamDataType::DEPTH), // Depth Img
+                           data->get(i));                         // Timestamp
         }
         chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
 
@@ -97,9 +99,10 @@ int main(int argc, const char *argv[])
 
         // if (ttrack < T)
         //     usleep((T - ttrack) * 1e6);
-        input_imgs.clear();
-        rgb_imgs.clear();
-        t_frames.clear();
+        // input_imgs.clear();
+        // rgb_imgs.clear();
+        // t_frames.clear();
+        data->reset();
         chrono::steady_clock::time_point end_time = chrono::steady_clock::now();
         std::cout << "PreProcess Time: " << std::chrono::duration_cast<std::chrono::duration<double>>(a2 - a1).count() << std::endl
                   << "Foward Time: " << std::chrono::duration_cast<std::chrono::duration<double>>(b2 - b1).count() << std::endl

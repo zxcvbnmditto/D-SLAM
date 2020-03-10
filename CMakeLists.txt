@@ -80,6 +80,7 @@ target_link_libraries( GET_DEPTH_FROM_DIR ${PROJECT_NAME})
 add_executable( MONODEPTH_SLAM_DISK
     src/monodepth_slam_disk.cpp
     src/monodepth2.cpp
+    src/monoslamData.cpp
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -93,6 +94,7 @@ target_link_libraries( MONODEPTH_SLAM_DISK ${PROJECT_NAME})
 add_executable( MONODEPTH_SLAM_CAMERA
     src/monodepth_slam_camera.cpp
     src/monodepth2.cpp
+    src/monoslamData.cpp
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -105,6 +107,7 @@ target_link_libraries( MONODEPTH_SLAM_CAMERA ${PROJECT_NAME})
 add_executable( MONODEPTH_SLAM_MULTITHREAD
     src/monodepth_slam_multithread.cpp
     src/monodepth2.cpp
+    src/monoslamData.cpp
 )
 
 target_include_directories(${PROJECT_NAME}

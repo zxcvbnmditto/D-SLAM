@@ -18,8 +18,7 @@ elif [ "$1" == "run" ]; then
   docker run -it \
              --name=$DEFAULT_NAME \
              --device=/dev/video0:/dev/video0:rw \
-			 --cpus="1.0" \
-			 --gpus device=0 \
+			 --gpus device=all \
              -e DISPLAY=$DISPLAY \
              -v /tmp/.X11-unix:/tmp/.X11-unix \
              -v $PROJECT_PATH:/vslam \

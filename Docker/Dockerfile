@@ -193,8 +193,8 @@ ENV NVIDIA_DRIVER_CAPABILITIES ${NVIDIA_DRIVER_CAPABILITIES},display
 ######################################
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    mesa-utils && \
-    texlive-extra-utils && \
+    mesa-utils \
+    texlive-extra-utils \
     gnuplot
 
 WORKDIR /vslam

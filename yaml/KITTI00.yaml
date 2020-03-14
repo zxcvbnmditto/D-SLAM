@@ -35,7 +35,7 @@ ThDepth: 35.0
 
 # New
 # Depthmap values factor
-DepthMapFactor: 0.0305
+DepthMapFactor: 0.03
 
 #--------------------------------------------------------------------------------------------
 # ORB Parameters

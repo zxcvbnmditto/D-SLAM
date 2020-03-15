@@ -23,7 +23,7 @@ Camera.height: 376
 Camera.fps: 10.0
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
-Camera.RGB: 1
+Camera.RGB: 0
 
 # New
 # IR projector baseline times fx (aprox.)
@@ -35,7 +35,7 @@ ThDepth: 35.0
 
 # New
 # Depthmap values factor
-DepthMapFactor: 0.03
+DepthMapFactor: 0.0315
 
 #--------------------------------------------------------------------------------------------
 # ORB Parameters

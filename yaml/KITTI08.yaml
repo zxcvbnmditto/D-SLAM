@@ -5,38 +5,34 @@
 #--------------------------------------------------------------------------------------------
 
 # Camera calibration and distortion parameters (OpenCV) 
-Camera.fx: 718.856
-Camera.fy: 718.856
-Camera.cx: 607.1928
-Camera.cy: 185.2157
+Camera.fx: 707.0912
+Camera.fy: 707.0912
+Camera.cx: 601.8873
+Camera.cy: 183.1104
 
 Camera.k1: 0.0
 Camera.k2: 0.0
 Camera.p1: 0.0
 Camera.p2: 0.0
 
-# New
-Camera.width: 1241
-Camera.height: 376
+Camera.width: 1226
+Camera.height: 370
 
-# Camera frames per second
+# Camera frames per second 
 Camera.fps: 10.0
 
+# stereo baseline times fx
+Camera.bf: 379.8145
+
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
-Camera.RGB: 1
+Camera.RGB: 0
 
-# New
-# IR projector baseline times fx (aprox.)
-Camera.bf: 386.1448
-
-# New
 # Close/Far threshold. Baseline times.
-ThDepth: 35.0
+ThDepth: 40
 
 # New
-# Depthmap values factor
-DepthMapFactor: 0.0305
-
+# Deptmap values factor
+DepthMapFactor: 0.03
 #--------------------------------------------------------------------------------------------
 # ORB Parameters
 #--------------------------------------------------------------------------------------------
@@ -54,12 +50,13 @@ ORBextractor.nLevels: 8
 # Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.
 # Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
 # You can lower these values if your images have low contrast			
-ORBextractor.iniThFAST: 20
+ORBextractor.iniThFAST: 12
 ORBextractor.minThFAST: 7
 
 #--------------------------------------------------------------------------------------------
 # Viewer Parameters
 #--------------------------------------------------------------------------------------------
+
 # Viewer.KeyFrameSize: 0.1
 # Viewer.KeyFrameLineWidth: 1
 # Viewer.GraphLineWidth: 1
@@ -93,8 +90,8 @@ mWidth: 1024
 mHeight: 320
 
 # Input Image/Frame Width & Height
-iWidth: 1241 # 1241
-iHeight: 376  # 376
+iWidth: 1226 # 1226
+iHeight: 370  # 370
 
 batch: 1
 

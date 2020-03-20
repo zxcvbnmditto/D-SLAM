@@ -34,7 +34,7 @@ echo -e "${GREEN}Model - ${DEPTH_MODEL} ${NC}"
 
 # YAML
 if [ -z "$3" ]; then
-    KITTI_META=KITTI_TEST.yaml
+    KITTI_META=KITTI_DEFAULT.yaml
 else
     KITTI_META=$3
 fi

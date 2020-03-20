@@ -68,14 +68,6 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 
-add_executable( RUNTIME src/runtime_bm.cpp )
-
-add_executable( VIDEO_CAPTURE_DEMO src/video_capture_demo.cpp )
-target_link_libraries( VIDEO_CAPTURE_DEMO ${PROJECT_NAME} )
-
-add_executable( GET_DEPTH_FROM_DIR src/get_depth_from_dir.cpp )
-target_link_libraries( GET_DEPTH_FROM_DIR ${PROJECT_NAME})
-
 
 add_executable( MONODEPTH_SLAM_DISK
     src/monodepth_slam_disk.cpp

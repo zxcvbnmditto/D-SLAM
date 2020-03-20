@@ -1,4 +1,4 @@
-# VSLAM-2020
+# D-SLAM
 This project proposed a monocular SLAM system. Depth estimation is being used to guide the SLAM system.
 
 ## Environment
@@ -119,6 +119,15 @@ cd scripts
 ### Others
 Checkout [scripts](scripts/) for more provided utilities.
 
+
+
+## Authors / Contributors
+- Chu-Hung Cheng
+- Henrry Gunawan
+- Kartik Patwari
+- Zhiwei Zhang
+
+If you have any questions, please contact Chu-Hung Cheng
 
 ## Credit
 - [ORBSLAM2-OPENCV4 FIX](https://github.com/Windfisch/ORB_SLAM2)

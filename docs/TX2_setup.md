@@ -51,6 +51,36 @@ sudo -H pip3 install Cython numpy torch-1.4.0-cp36-cp36m-linux_aarch64.whl
 rm torch-1.4.0-cp36-cp36m-linux_aarch64.whl
 ```
 
+## Remote Control Setup
+We have setup remote control using TurboVNC and VirtualGL.
+
+### Installation
+You can refer [this wonderful post](https://forums.developer.nvidia.com/t/howto-install-virtualgl-and-turbovnc-to-jetson-tk1/37790#4939863) for details guide to how to setup
+
+### Run
+On your local machine, launch the first terminal and ssh into TX2 to create a VNC display.
+```bash
+# SSH
+ssh <hostname>@<ip-addr>
+
+# First create a VNC display if not already created
+/opt/TurboVNC/bin/vncserver # Our default creates on (:2), this can be different based on ur setup
+```
+
+Now, launch a second terminal session.
+```bash
+# Open up vncviewer
+vncviewer # Enter <tx2-ip>:5902 on the popup window
+```
+This should prompt you a display (:2) from TX2
+
+
+Back to the ssh TX2 session, you should be able to run and view any OpenGL applications.
+```bash
+# Test Run glxgears
+/opt/VirtualGL/bin/vglrun -nodl -d :1 glxgears
+```
+
 
 
 ## Structure

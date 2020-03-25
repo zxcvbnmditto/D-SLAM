@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Sections on D-SLAM</title>
+    <link>https://zxcvbnmditto.github.io/D-SLAM/post/</link>
+    <description>Recent content in Sections on D-SLAM</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://zxcvbnmditto.github.io/D-SLAM/post/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Build &amp; Run</title>
+      <link>https://zxcvbnmditto.github.io/D-SLAM/post/buldrun/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://zxcvbnmditto.github.io/D-SLAM/post/buldrun/</guid>
+      <description>Build &amp;amp; Run KITTI Data preparation This part is exclusive for running the disk demo. You can skip if you are only interested in the camera demo.
+Download the KITTI Odometry rgb dataset. You will need the rgb one to run our VSLAM.
+mkdir -p &amp;lt;path-to-project-root&amp;gt;/data # Download KITTI Odometry grayscale wget http://www.cvlibs.net/download.php?file=data_odometry_rgb.zip unzip data_odometry_rgb.zip rm data_odometry_rgb.zip # Remove zip if desired mv dataset kitti-rgb-odometry # Rename Directory mv kitti-rgb-odometry &amp;lt;path-to-project-root&amp;gt;/data # Move Directory Rename Kitti images with timestamps with the provided scripts.</description>
+    </item>
+    
+    <item>
+      <title>Conclusion</title>
+      <link>https://zxcvbnmditto.github.io/D-SLAM/post/conclusion/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://zxcvbnmditto.github.io/D-SLAM/post/conclusion/</guid>
+      <description>Conclusion Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam luctus lorem et erat blandit convallis. Curabitur venenatis mi sed risus egestas, vitae lobortis felis ultricies. Nulla facilisi. Vestibulum rhoncus tortor quis ex laoreet venenatis. Etiam vitae facilisis lectus. Suspendisse pellentesque consequat viverra. Pellentesque facilisis porta arcu in faucibus. Morbi convallis.</description>
+    </item>
+    
+    <item>
+      <title>Demo</title>
+      <link>https://zxcvbnmditto.github.io/D-SLAM/post/demo/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://zxcvbnmditto.github.io/D-SLAM/post/demo/</guid>
+      <description>Demo KITTI Sequence 08 Coming Soon.
+Jetson TX2 @ UC Davis Kemper Hall Coming Soon.</description>
+    </item>
+    
+    <item>
+      <title>Installation</title>
+      <link>https://zxcvbnmditto.github.io/D-SLAM/post/installation/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://zxcvbnmditto.github.io/D-SLAM/post/installation/</guid>
+      <description>Installation This section is dedicated to guide the process of installing D-SLAM and all its dependencies on both x86 (Docker) and NVIDIA Jetson TX2.
+Environment The following is a quick overview between the environments that D-SLAM was built and tested on. Note that it is very possible to introduce dependencies issue during compilation if using libraries with different version, especially on a Jetson TX2.
+    Docker Jetson TX2 Recomemnd     Cuda 10.</description>
+    </item>
+    
+    <item>
+      <title>Lincense</title>
+      <link>https://zxcvbnmditto.github.io/D-SLAM/post/license/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://zxcvbnmditto.github.io/D-SLAM/post/license/</guid>
+      <description>License Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam luctus lorem et erat blandit convallis. Curabitur venenatis mi sed risus egestas, vitae lobortis felis ultricies. Nulla facilisi. Vestibulum rhoncus tortor quis ex laoreet venenatis. Etiam vitae facilisis lectus. Suspendisse pellentesque consequat viverra. Pellentesque facilisis porta arcu in faucibus. Morbi convallis.</description>
+    </item>
+    
+    <item>
+      <title>Overview</title>
+      <link>https://zxcvbnmditto.github.io/D-SLAM/post/overview/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://zxcvbnmditto.github.io/D-SLAM/post/overview/</guid>
+      <description>Overview D-SLAM is a Visual SLAM system using monocular RGB inputs and estimated depth inputs to construct a 3D mapping. The goal of this project is to create a well-performing SLAM system under contrained resources setup while aiming for real-time performance. The D-SLAM system can supports stream of RGB images either from disk or camera.
+ D-SLAM is based on MonoDepth2 depth estimator and ORB-SLAM2 system, and it be trained and evaluated with monocular RGB image stream without collecting additional image stream, or depth information from sensor.</description>
+    </item>
+    
+  </channel>
+</rss>

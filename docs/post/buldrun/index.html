@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="
+		Some section with content
+		"> 
+    
+	<meta name="author" content=" map[] ">  
+    <base href="https://zxcvbnmditto.github.io/D-SLAM/">
+    <title>Build &amp; Run</title>
+
+    
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    
+    <link href="css/landing-page.css" rel="stylesheet">
+
+    
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    
+    <link href="css/bootstrap-social.css" rel="stylesheet">
+
+    
+    
+    
+
+    <style>
+    .navbar {
+    border-color: #e7e7e7;
+}
+
+.content-section-a,
+footer,
+.navbar {
+  background-color: #f8f8f8;
+  color: #333;
+}
+
+.navbar a:link,
+.navbar-default .navbar-nav>li>a {
+  color: #777;
+}
+
+.navbar a:hover,
+.navbar-default .navbar-nav>li>a:hover {
+  color: rgb(51, 51, 51);
+}
+
+.content-section-b {
+  background-color: white;
+  color: #333;
+}
+
+body {
+  color: rgb(51, 51, 51);
+}
+
+.header-container h1,
+.header-container h2,
+.header-container h3,
+.header-container h4 {
+  color: rgb(51, 51, 51);
+}
+ 
+  </style>
+
+</head>
+<body>
+
+
+<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+        
+        <div class="navbar-header page-scroll" style="margin-left: -15px;">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" style="margin-right: 0px;">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand page-scroll" style="padding-left: 0px;margin-left: 0px;" href="#intro">
+            D-SLAM</a>
+        </div>
+        
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a class="page-scroll" href="#overview">
+                        Overview
+                    </a>
+                </li>
+                <li>
+                    <a class="page-scroll" href="#installation">
+                        Installation
+                    </a>
+                </li>
+                <li>
+                    <a class="page-scroll" href="#build&run">
+                        Build & Run
+                    </a>
+                </li>
+                <li>
+                    <a class="page-scroll" href="#demo">
+                        Demo
+                    </a>
+                </li>
+                <li>
+                    <a class="page-scroll" href="#conclusion">
+                        Conclusion
+                    </a>
+                </li>
+                <li>
+                    <a class="page-scroll" href="#license">
+                        License
+                    </a>
+                </li>
+				 
+				 
+            </ul>
+        </div>
+        
+    </div>
+    
+</nav>
+
+
+<section id="services">
+   <div class="content-section-a">
+
+      <div class="container">
+
+        <div class="row">
+          <div>
+            <hr class="section-heading-spacer">
+            <div class="clearfix"></div>
+            <h2 class="section-heading">Build &amp; Run</h2>
+            <h1 id="build--run">Build &amp; Run</h1>
+<h3 id="kitti-data-preparation">KITTI Data preparation</h3>
+<p>This part is exclusive for running the disk demo. You can <a href="#overview">skip</a> if you are only interested in the camera demo.</p>
+<p>Download the <a href="http://www.cvlibs.net/datasets/kitti/eval_odometry.php">KITTI Odometry rgb dataset</a>. You will need the rgb one to run our VSLAM.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">mkdir -p &lt;path-to-project-root&gt;/data
+
+<span style="color:#75715e"># Download KITTI Odometry grayscale</span>
+wget http://www.cvlibs.net/download.php?file<span style="color:#f92672">=</span>data_odometry_rgb.zip
+unzip data_odometry_rgb.zip
+rm data_odometry_rgb.zip                          <span style="color:#75715e"># Remove zip if desired</span>
+mv dataset kitti-rgb-odometry                     <span style="color:#75715e"># Rename Directory</span>
+mv kitti-rgb-odometry &lt;path-to-project-root&gt;/data <span style="color:#75715e"># Move Directory</span>
+</code></pre></div><p>Rename Kitti images with timestamps with the provided scripts.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cd  &lt;path-to-project-root&gt;/scripts
+<span style="color:#75715e"># Follow the prompt for args</span>
+./kitti_rename_timestamp.sh
+</code></pre></div><h3 id="build">Build</h3>
+<p>Compile ORBSLAM2</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">cd &lt;path-to-orbslam2&gt;
+./build.sh
+</code></pre></div><p>Compile D-SLAM</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">mkdir build <span style="color:#f92672">&amp;&amp;</span> cd build
+
+<span style="color:#75715e"># Build on Docker</span>
+cmake -D Torch_DIR<span style="color:#f92672">=</span>../ThirdParty/libtorch/share/cmake/Torch .. <span style="color:#f92672">&amp;&amp;</span> make -j
+<span style="color:#75715e"># Build on TX2</span>
+cmake -D Torch_DIR<span style="color:#f92672">=</span>../ThirdParty/pytorch/share/cmake/Torch .. <span style="color:#f92672">&amp;&amp;</span> make -j
+</code></pre></div><p>Generate Pre-trained Monodepth2 Model for D-SLAM</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># Download the models from [Monodepth2](https://github.com/nianticlabs/monodepth2) and place it under &lt;path-to-project-root&gt;/models</span>
+
+<span style="color:#75715e"># Replace following monodepth2 source files with the provided ones</span>
+rm  &lt;path-to-project-root&gt;/ThirdParty/monodepth2/networks/depth_decoder.py
+rm  &lt;path-to-project-root&gt;/ThirdParty/monodepth2/networks/resnet_encoder.py
+cp  &lt;path-to-project-root&gt;/others/* &lt;path-to-project-root&gt;/ThirdParty/monodepth2/networks
+
+cd scripts
+<span style="color:#75715e"># Follow the prompt for args</span>
+./torchscript_converter.sh
+</code></pre></div><h3 id="run">Run</h3>
+<p>We have provided scripts to run the demo presented.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash"><span style="color:#75715e"># Disk Demo</span>
+<span style="color:#75715e"># Usage: mono_slam_disk_demo.sh &lt;ENV&gt; &lt;SEQUENCE_NUMBER&gt; &lt;DEPTH_MODEL_NAME&gt; &lt;YAML&gt;</span>
+./mono_slam_disk_demo.sh docker <span style="color:#ae81ff">00</span> mono_640x192 KITTI00-02.yaml <span style="color:#75715e"># Replace docker with TX2 depends on your env</span>
+
+<span style="color:#75715e"># Camera</span>
+<span style="color:#75715e"># Usage: mono_slam_camera_demo.sh &lt;ENV&gt; &lt;DEPTH_MODEL_NAME&gt; &lt;YAML&gt;</span>
+./mono_slam_camera_demo.sh docker mono_640x192 KITTI_CAM.yaml
+</code></pre></div><p>To run and view real-time result on TX2.</p>
+<ol>
+<li>
+<p>ssh into the TX2 with the remote computer</p>
+</li>
+<li>
+<p>Run VNC through SSH and display the results on the VNC client</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">export DISPLAY<span style="color:#f92672">=</span>:1 <span style="color:#f92672">&amp;&amp;</span> /usr/lib/vino/vino-server
+</code></pre></div></li>
+<li>
+<p>Open remmina and set the connection with protocal VNC</p>
+</li>
+<li>
+<p>Run the camera Demo</p>
+</li>
+</ol>
+
+        </div>
+    </div>
+
+</div>
+</div>
+
+</section>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8" style="padding-left: 0px; width:100%">
+				<ul class="list-inline">
+					<li>
+						<a class="page-scroll" href="#intro">Up</a>
+					</li>
+					
+					
+				 </ul>
+				 <p class="copyright text-muted small" style="text-align:left;">
+                    Copyright &copy; D-SLAM All Rights Reserved 
+                        </br>Built with <a href="http://gohugo.io">Hugo</a> and the <a href="https://github.com/cdeck3r/OneDly-Theme">OneDly project</a> theme.
+                 </p>
+			</div>
+            
+        </div>
+    </div>
+</footer>
+
+<script src="js/jquery-1.11.0.js"></script>
+
+
+<script src="js/jquery.easing.min.js"></script>
+
+
+<script src="js/bootstrap.min.js"></script>
+
+
+
+</body>
+</html>
+

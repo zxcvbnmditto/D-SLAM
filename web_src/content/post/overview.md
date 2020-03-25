@@ -27,7 +27,4 @@ D-SLAM is based on MonoDepth2 depth estimator and ORB-SLAM2 system, and it be **
 &nbsp;
 
 D-SLAM is evaluated on the [KITTI dataset](http://www.cvlibs.net/datasets/kitti/eval_odometry.php). We have also run a real-world experiment with NVIDIA Jetson TX2 showing that D-SLAM was able to detect loops and relocalize camera in real time.
-​
-<!-- ![alt text](01.png)
-![alt text](02.png)
-![alt text](03.png) -->
+

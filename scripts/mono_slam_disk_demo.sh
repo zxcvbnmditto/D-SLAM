@@ -60,25 +60,25 @@ if [ ! -r ${CONFIG_FILE} ]; then
     exit 2 # Failure
 fi
 
-RGB_DIR=${BASE_DIR}/data/kitti-rgb-output/${KITTI_SEQUENCE}/rgb
+RGB_DIR=/data/kitti-rgb-output/${KITTI_SEQUENCE}/rgb
 if [ ! -d ${RGB_DIR} ]; then
     echo -e "${RED}Cannot find rgb images directory at ${RGB_DIR} ${NC}"
     exit 2 # Failure
 fi
 
-OUTPUT_DIR=${BASE_DIR}/data/kitti-rgb-output/${KITTI_SEQUENCE}/output
+OUTPUT_DIR=/data/kitti-rgb-output/${KITTI_SEQUENCE}/output
 if [ ! -d ${RGB_DIR} ]; then
     echo -e "${RED}Cannot find output images directory at ${RGB_DIR} ${NC}"
     exit 2 # Failure
 fi
 
-ENCODER=${BASE_DIR}/models/${DEPTH_MODEL}/t_encoder.pt
+ENCODER=/data/models/${DEPTH_MODEL}/t_encoder.pt
 if [ ! -r ${ENCODER} ]; then
     echo -e "${RED}Cannot find decoder at ${ENCODER} ${NC}"
     exit 2 # Failure
 fi
 
-DECODER=${BASE_DIR}/models/${DEPTH_MODEL}/t_decoder.pt
+DECODER=/data/models/${DEPTH_MODEL}/t_decoder.pt
 if [ ! -r ${DECODER} ]; then
     echo -e "${RED}Cannot find decoder at ${DECODER} ${NC}"
     exit 2 # Failure

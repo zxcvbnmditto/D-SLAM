@@ -11,7 +11,7 @@ echo -e "${YELLOW}Usage: rename_kitti.sh <ENV> <SEQUENCE_NUMBER>${NC}"
 # ENV
 if [ "$1" = "docker" ]; then
     echo -e "${GREEN}Environment - Docker${NC}"
-    DATA_DIR=/vslam/data
+    DATA_DIR=/data
 elif [ "$1" = "tx2" ]; then
     echo -e "${GREEN}Environment - Jetson-TX2${NC}"
     DATA_DIR=/media/vslam/SSD250/data

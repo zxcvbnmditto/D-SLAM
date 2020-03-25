@@ -1,6 +1,6 @@
 
 # Custom
-ThirdParty/
+ThirdParty
 data/*
 models/
 *.zip

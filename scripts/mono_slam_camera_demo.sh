@@ -52,13 +52,13 @@ if [ ! -r ${CONFIG_FILE} ]; then
     exit 2 # Failure
 fi
 
-ENCODER=${BASE_DIR}/models/${DEPTH_MODEL}/t_encoder.pt
+ENCODER=/data/models/${DEPTH_MODEL}/t_encoder.pt
 if [ ! -r ${ENCODER} ]; then
     echo -e "${RED}Cannot find decoder at ${ENCODER} ${NC}"
     exit 2 # Failure
 fi
 
-DECODER=${BASE_DIR}/models/${DEPTH_MODEL}/t_decoder.pt
+DECODER=/data/models/${DEPTH_MODEL}/t_decoder.pt
 if [ ! -r ${DECODER} ]; then
     echo -e "${RED}Cannot find decoder at ${DECODER} ${NC}"
     exit 2 # Failure

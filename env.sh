@@ -4,7 +4,7 @@
 #   <arg1> - build / run / empty
 
 # Using same name for container & image here
-DEFAULT_NAME=vslam_cuda10_2
+DEFAULT_NAME=vslam_cuda10_2_optim
 PROJECT_PATH=$(pwd)
 
 if [ "$1" == "build" ]; then
@@ -21,6 +21,7 @@ elif [ "$1" == "run" ]; then
 			 --gpus device=all \
              -e DISPLAY=$DISPLAY \
              -v /tmp/.X11-unix:/tmp/.X11-unix \
+             -v /media/james/D1/D-SLAM/data/:/data \
              -v $PROJECT_PATH:/vslam \
              $DEFAULT_NAME:latest \
              /bin/bash
